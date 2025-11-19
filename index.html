@@ -1,15 +1,418 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <meta charset=utf-8>
-    <meta name=viewport content="width=device-width,initial-scale=1">
-    <title>blog</title>
-    <link href=static/css/app.faa2bef3c05202c7fb94d609f0aed94a.css rel=stylesheet>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>清除浏览器和钉钉缓存操作指南</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            background: white;
+            border-radius: 50px;
+            padding: 5px;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .tab {
+            padding: 12px 30px;
+            cursor: pointer;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .tab.active {
+            background: #3498db;
+            color: white;
+        }
+        
+        .content-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .content-section.active {
+            display: block;
+        }
+        
+        .browsers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        .card-header {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            font-size: 24px;
+            color: white;
+        }
+        
+        .chrome .card-icon { background: #4285F4; }
+        .firefox .card-icon { background: #FF7139; }
+        .edge .card-icon { background: #0078D7; }
+        .safari .card-icon { background: #5BC8F7; }
+        
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        .steps {
+            list-style-type: none;
+            counter-reset: step-counter;
+        }
+        
+        .step {
+            margin-bottom: 20px;
+            padding-left: 40px;
+            position: relative;
+        }
+        
+        .step:before {
+            counter-increment: step-counter;
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 28px;
+            height: 28px;
+            background: #3498db;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .dingtalk-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+        }
+        
+        .os-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .os-header {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .ios .os-icon { color: #007AFF; }
+        .android .os-icon { color: #3DDC84; }
+        
+        .tip-box {
+            background: #e8f4fd;
+            border-left: 4px solid #3498db;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @media (max-width: 768px) {
+            .browsers-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .dingtalk-section {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .tabs {
+                flex-direction: column;
+                width: 100%;
+                border-radius: 15px;
+            }
+            
+            .tab {
+                border-radius: 10px;
+                margin: 5px;
+            }
+        }
+    </style>
 </head>
 <body>
-<div id=app></div>
-<script type=text/javascript src=static/js/manifest.ced7d52ea9444b7cb837.js></script>
-<script type=text/javascript src=static/js/vendor.7e60edfb27fba1eb8f49.js></script>
-<script type=text/javascript src=static/js/app.538e4923d211e42c8c87.js></script>
+    <div class="container">
+        <header>
+            <h1>清除缓存操作指南</h1>
+            <p class="subtitle">按照以下步骤清除浏览器和钉钉应用的缓存，解决应用运行缓慢或显示异常问题</p>
+        </header>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="browsers">
+                <i class="fas fa-desktop"></i> 浏览器清除指南
+            </div>
+            <div class="tab" data-tab="dingtalk">
+                <i class="fas fa-mobile-alt"></i> 钉钉清除指南
+            </div>
+        </div>
+        
+        <section id="browsers" class="content-section active">
+            <div class="browsers-grid">
+                <!-- Chrome -->
+                <div class="card chrome">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fab fa-chrome"></i>
+                        </div>
+                        <h2 class="card-title">Google Chrome</h2>
+                    </div>
+                    <div class="card-body">
+                        <ol class="steps">
+                            <li class="step">点击浏览器右上角的三个点图标（⋮）</li>
+                            <li class="step">选择"更多工具" > "清除浏览数据"</li>
+                            <li class="step">在"时间范围"中选择"时间不限"</li>
+                            <li class="step">勾选"缓存的图片和文件"</li>
+                            <li class="step">点击"清除数据"按钮</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <!-- Firefox -->
+                <div class="card firefox">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fab fa-firefox-browser"></i>
+                        </div>
+                        <h2 class="card-title">Mozilla Firefox</h2>
+                    </div>
+                    <div class="card-body">
+                        <ol class="steps">
+                            <li class="step">点击右上角的三条横线图标（≡）</li>
+                            <li class="step">选择"设置"</li>
+                            <li class="step">在左侧菜单中选择"隐私与安全"</li>
+                            <li class="step">找到"Cookie和网站数据"部分</li>
+                            <li class="step">点击"清除数据"按钮，勾选"缓存内容"后确认</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <!-- Edge -->
+                <div class="card edge">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fab fa-edge"></i>
+                        </div>
+                        <h2 class="card-title">Microsoft Edge</h2>
+                    </div>
+                    <div class="card-body">
+                        <ol class="steps">
+                            <li class="step">点击右上角的三个点图标（⋯）</li>
+                            <li class="step">选择"设置"</li>
+                            <li class="step">在左侧菜单中选择"隐私、搜索和服务"</li>
+                            <li class="step">点击"选择要清除的内容"</li>
+                            <li class="step">勾选"缓存的图像和文件"，然后点击"立即清除"</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <!-- Safari -->
+                <div class="card safari">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fab fa-safari"></i>
+                        </div>
+                        <h2 class="card-title">Apple Safari</h2>
+                    </div>
+                    <div class="card-body">
+                        <ol class="steps">
+                            <li class="step">点击屏幕顶部菜单栏的"Safari"</li>
+                            <li class="step">选择"偏好设置"</li>
+                            <li class="step">切换到"高级"标签页，勾选"在菜单栏中显示开发菜单"</li>
+                            <li class="step">返回Safari，点击顶部菜单栏的"开发"</li>
+                            <li class="step">选择"清空缓存"（或使用快捷键Option+Command+E）</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tip-box">
+                <h3><i class="fas fa-lightbulb"></i> 提示</h3>
+                <p>清除缓存不会删除您的书签、保存的密码或自动填充信息，但可能会使网站首次加载速度稍慢。</p>
+            </div>
+        </section>
+        
+        <section id="dingtalk" class="content-section">
+            <div class="dingtalk-section">
+                <!-- iOS -->
+                <div class="os-card ios">
+                    <div class="os-header">
+                        <i class="os-icon fab fa-apple fa-2x"></i>
+                        <h2 class="card-title">iOS 版钉钉</h2>
+                    </div>
+                    <div class="card-body">
+                        <ol class="steps">
+                            <li class="step">打开钉钉应用，点击左上角"头像"</li>
+                            <li class="step">进入"设置"页面</li>
+                            <li class="step">在设置页面中找到"通用"选项</li>
+                            <li class="step">点击进入"通用"页面</li>
+                            <li class="step">找到"存储空间"并点击进入</li>
+                            <li class="step">选择"前往清理"并确认操作</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <!-- Android -->
+                <div class="os-card android">
+                    <div class="os-header">
+                        <i class="os-icon fab fa-android fa-2x"></i>
+                        <h2 class="card-title">Android 版钉钉</h2>
+                    </div>
+                    <div class="card-body">
+                        <ol class="steps">
+                            <li class="step">打开钉钉应用，点击左上角"头像"</li>
+                            <li class="step">进入"设置"页面</li>
+                            <li class="step">在设置页面中找到"通用"选项</li>
+                            <li class="step">选择"一键清理"并确认操作</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tip-box">
+                <h3><i class="fas fa-exclamation-triangle"></i> 重要提示</h3>
+                <p>清除钉钉缓存后，如果还存在问题，您可以重新登录账号。建议在操作前确保记得账号密码，并备份重要聊天记录和文件。</p>
+            </div>
+        </section>
+        
+        <footer>
+            <p>© 2023 技术支持中心 | 本指南仅供参考，具体操作可能因版本不同略有差异</p>
+        </footer>
+    </div>
+
+    <script>
+        // 标签切换功能
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // 移除所有标签的active类
+                document.querySelectorAll('.tab').forEach(t => {
+                    t.classList.remove('active');
+                });
+                
+                // 添加当前标签的active类
+                tab.classList.add('active');
+                
+                // 隐藏所有内容区域
+                document.querySelectorAll('.content-section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                
+                // 显示对应内容区域
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+    </script>
 </body>
 </html>
