@@ -1,1352 +1,297 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>x86 描述符计算器</title>
-<style>
-* {
-box-sizing: border-box;
-font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
- 
-body {
-margin: 0;
-padding: 20px;
-background-color: #1a1a2e;
-color: #e6e6e6;
-line-height: 1.6;
-}
- 
-.container {
-max-width: 1200px;
-margin: 0 auto;
-background-color: #162447;
-border-radius: 12px;
-box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-padding: 30px;
-border: 1px solid #2d4059;
-}
- 
-header {
-text-align: center;
-margin-bottom: 30px;
-padding-bottom: 20px;
-border-bottom: 2px solid #2d4059;
-}
- 
-h1 {
-color: #4cc9f0;
-margin: 0 0 10px 0;
-font-size: 2.5rem;
-text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
- 
-.section-title {
-color: #4cc9f0;
-font-size: 1.4rem;
-margin-top: 0;
-margin-bottom: 20px;
-padding-bottom: 10px;
-border-bottom: 1px solid #2d4059;
-}
- 
-.settings-panel, .results-panel, .analysis-panel {
-background-color: #1b2a4e;
-border-radius: 10px;
-padding: 25px;
-margin-bottom: 30px;
-border: 1px solid #2d4059;
-}
- 
-.form-group {
-margin-bottom: 20px;
-}
- 
-label {
-display: block;
-margin-bottom: 8px;
-font-weight: 500;
-color: #c0c0c0;
-}
- 
-input[type="text"], select {
-width: 100%;
-padding: 12px 15px;
-border-radius: 6px;
-border: 1px solid #3a506b;
-background-color: #0f2540;
-color: #e6e6e6;
-font-size: 1rem;
-transition: all 0.3s;
-}
- 
-input[type="text"]:focus, select:focus {
-outline: none;
-border-color: #4cc9f0;
-box-shadow: 0 0 0 2px rgba(76, 201, 240, 0.2);
-}
- 
-.checkbox-group {
-display: flex;
-align-items: center;
-margin-bottom: 12px;
-}
- 
-.checkbox-group input[type="checkbox"] {
-width: 20px;
-height: 20px;
-margin-right: 10px;
-accent-color: #4cc9f0;
-}
- 
-.segment-type-selector {
-display: flex;
-margin-bottom: 25px;
-border-radius: 8px;
-overflow: hidden;
-border: 1px solid #2d4059;
-}
- 
-.segment-type-option {
-flex: 1;
-text-align: center;
-padding: 12px;
-background-color: #1b2a4e;
-cursor: pointer;
-transition: all 0.3s;
-}
- 
-.segment-type-option:hover {
-background-color: #2d4059;
-}
- 
-.segment-type-option.active {
-background-color: #4cc9f0;
-color: #162447;
-font-weight: 600;
-}
- 
-.app-params, .sys-params {
-margin-top: 20px;
-}
- 
-.param-row {
-display: flex;
-flex-wrap: wrap;
-gap: 20px;
-margin-bottom: 15px;
-}
- 
-.param-row .form-group {
-flex: 1;
-min-width: 200px;
-}
- 
-.app-seg-type-selector {
-display: flex;
-border-radius: 6px;
-overflow: hidden;
-border: 1px solid #2d4059;
-margin-bottom: 20px;
-}
- 
-.app-seg-type-option {
-flex: 1;
-text-align: center;
-padding: 10px;
-background-color: #1b2a4e;
-cursor: pointer;
-transition: all 0.3s;
-}
- 
-.app-seg-type-option:hover {
-background-color: #2d4059;
-}
- 
-.app-seg-type-option.active {
-background-color: #4361ee;
-color: #fff;
-font-weight: 600;
-}
- 
-.warning {
-background-color: rgba(255, 193, 7, 0.1);
-border-left: 4px solid #ffc107;
-padding: 12px 15px;
-margin: 20px 0;
-border-radius: 0 6px 6px 0;
-}
- 
-.result-section {
-margin-top: 20px;
-}
- 
-.result-format {
-background-color: #0f2540;
-padding: 20px;
-border-radius: 8px;
-margin-bottom: 20px;
-border: 1px solid #2d4059;
-}
- 
-.result-label {
-display: block;
-font-family: 'Courier New', monospace;
-color: #a9a9a9;
-font-size: 0.9rem;
-margin-bottom: 8px;
-}
- 
-.result-value {
-font-family: 'Courier New', monospace;
-background-color: #0a1829;
-padding: 12px;
-border-radius: 6px;
-word-break: break-all;
-color: #4cc9f0;
-font-size: 1.1rem;
-border: 1px solid #2d4059;
-}
- 
-.hex-display {
-font-family: 'Courier New', monospace;
-font-weight: bold;
-}
- 
-.descriptor-visual {
-display: flex;
-margin-top: 25px;
-background-color: #0f2540;
-border-radius: 8px;
-padding: 15px;
-border: 1px solid #2d4059;
-}
- 
-.byte-block {
-flex: 1;
-text-align: center;
-padding: 10px 5px;
-}
- 
-.byte-header {
-font-size: 0.8rem;
-color: #a9a9a9;
-margin-bottom: 5px;
-}
- 
-.byte-value {
-font-family: 'Courier New', monospace;
-font-weight: bold;
-font-size: 1.1rem;
-color: #4cc9f0;
-}
- 
-.byte-desc {
-font-size: 0.7rem;
-color: #888;
-margin-top: 5px;
-}
- 
-.field-description {
-font-size: 0.85rem;
-color: #a9a9a9;
-margin-top: 5px;
-}
- 
-.message-area {
-margin-top: 20px;
-padding: 15px;
-border-radius: 8px;
-display: none;
-}
- 
-.message-area.error {
-background-color: rgba(220, 53, 69, 0.1);
-border-left: 4px solid #dc3545;
-display: block;
-}
- 
-.message-area.warning {
-background-color: rgba(255, 193, 7, 0.1);
-border-left: 4px solid #ffc107;
-display: block;
-}
- 
-.message-area.success {
-background-color: rgba(40, 167, 69, 0.1);
-border-left: 4px solid #28a745;
-display: block;
-}
- 
-.field-analysis-grid {
-display: grid;
-grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-gap: 20px;
-}
- 
-.field-item {
-background-color: #0f2540;
-padding: 15px;
-border-radius: 8px;
-border: 1px solid #2d4059;
-}
- 
-.field-name {
-font-weight: 600;
-color: #4cc9f0;
-margin-bottom: 5px;
-}
- 
-.field-value {
-font-family: 'Courier New', monospace;
-font-size: 1.1rem;
-margin-bottom: 5px;
-}
- 
-.field-bits {
-color: #a9a9a9;
-font-size: 0.85rem;
-}
- 
-.field-description-text {
-font-size: 0.9rem;
-color: #c0c0c0;
-margin-top: 8px;
-}
- 
-/* 第一行参数样式 - 代码段和数据段的特定参数 */
-.first-row-params {
-display: flex;
-flex-wrap: wrap;
-gap: 40px;
-margin: 20px 0;
-padding: 20px;
-background-color: rgba(0, 0, 0, 0.1);
-border-radius: 8px;
-border-left: 4px solid #4cc9f0;
-justify-content: space-between;
-}
- 
-.first-row-params .checkbox-group {
-margin-bottom: 0;
-min-width: 180px;
-}
- 
-/* 第二行参数样式 - 通用参数 */
-.second-row-params {
-display: flex;
-flex-wrap: wrap;
-gap: 40px;
-margin: 20px 0;
-padding: 20px;
-background-color: rgba(0, 0, 0, 0.1);
-border-radius: 8px;
-border-left: 4px solid #4361ee;
-align-items: center;
-justify-content: space-between;
-}
- 
-.second-row-item {
-display: flex;
-align-items: center;
-min-height: 48px;
-}
- 
-/* DPL输入框容器 */
-.dpl-container {
-flex: 0 0 auto;
-}
- 
-/* 复选框容器样式 - 复选框在左，文字在右 */
-.checkbox-container {
-display: flex;
-align-items: center;
-justify-content: flex-start;
-}
- 
-.checkbox-container input[type="checkbox"] {
-order: 1;
-margin-right: 10px;
-width: 20px;
-height: 20px;
-accent-color: #4cc9f0;
-}
- 
-.checkbox-container label {
-order: 2;
-margin-bottom: 0;
-white-space: nowrap;
-}
- 
-/* DPL输入框样式 */
-.dpl-input {
-width: 120px;
-padding: 12px 15px;
-border-radius: 6px;
-border: 1px solid #3a506b;
-background-color: #0f2540;
-color: #e6e6e6;
-font-size: 1rem;
-transition: all 0.3s;
-}
- 
-.dpl-input:focus {
-outline: none;
-border-color: #4cc9f0;
-box-shadow: 0 0 0 2px rgba(76, 201, 240, 0.2);
-}
- 
-/* 应用程序段参数容器 */
-.app-seg-params-container {
-margin-top: 20px;
-}
- 
-@media (max-width: 992px) {
-.first-row-params,
-.second-row-params {
-gap: 20px;
-}
- 
-.first-row-params .checkbox-group,
-.second-row-item {
-min-width: 160px;
-}
-}
- 
-@media (max-width: 768px) {
-.param-row {
-flex-direction: column;
-gap: 0;
-}
- 
-.field-analysis-grid {
-grid-template-columns: 1fr;
-}
- 
-.first-row-params,
-.second-row-params {
-flex-direction: column;
-gap: 15px;
-align-items: flex-start;
-}
- 
-.first-row-params .checkbox-group,
-.second-row-item {
-min-width: 100%;
-}
- 
-.checkbox-container {
-width: 100%;
-justify-content: flex-start;
-}
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>x86 描述符计算器</title>
+    <link rel="stylesheet" href="static/css/descriptor.css">
 </head>
 <body>
-<div class="container">
-<header>
-<h1>x86 描述符计算器</h1>
-</header>
- 
-<div class="settings-panel">
-<h2 class="section-title">描述符参数</h2>
- 
-<div class="form-group">
-<label>描述符类型:</label>
-<div class="segment-type-selector">
-<div class="segment-type-option active" data-type="app">应用程序 (代码/数据)</div>
-<div class="segment-type-option" data-type="sys">系统 (IDT/门/TSS等)</div>
-</div>
-</div>
- 
-<!-- 应用程序段参数 -->
-<div id="appsegs" class="app-params">
-<div class="param-row">
-<div class="form-group">
-<label for="base">基地址 (Base):</label>
-<input type="text" id="base" value="0x00000000" maxlength="10">
-<div class="field-description">32位线性地址</div>
-</div>
-<div class="form-group">
-<label for="limit">界限 (Limit):</label>
-<input type="text" id="limit" value="0xFFFFF" maxlength="7">
-<div class="field-description">段的大小-1 (字节)</div>
-</div>
-</div>
- 
-<div class="form-group">
-<label>应用程序段类型:</label>
-<div class="app-seg-type-selector">
-<div class="app-seg-type-option active" data-type="data">数据段</div>
-<div class="app-seg-type-option" data-type="code">代码段</div>
-</div>
-</div>
- 
-<!-- 应用程序段特定参数 -->
-<div class="app-seg-params-container">
-<!-- 第一行：代码段/数据段特定参数 + 通用参数 -->
-<div class="first-row-params">
-<!-- 数据段参数 -->
-<div id="data-seg-params">
-<div class="checkbox-group">
-<input type="checkbox" id="expand">
-<label for="expand">向下扩展 (Expand Down)</label>
-</div>
-<div class="checkbox-group">
-<input type="checkbox" id="writable">
-<label for="writable">可写 (Writable)</label>
-</div>
-</div>
- 
-<!-- 代码段参数 -->
-<div id="code-seg-params" style="display:none">
-<div class="checkbox-group">
-<input type="checkbox" id="conforming">
-<label for="conforming">一致段 (Conforming)</label>
-</div>
-<div class="checkbox-group">
-<input type="checkbox" id="readable" checked>
-<label for="readable">可读 (Readable)</label>
-</div>
-</div>
- 
-<!-- 通用参数 -->
-<div class="checkbox-group">
-<input type="checkbox" id="accessed">
-<label for="accessed">已访问 (Accessed)</label>
-</div>
- 
-<div class="checkbox-group">
-<input type="checkbox" id="granularity" checked>
-<label for="granularity">粒度 (Granularity, 1=4KB, 0=1B) </label>
-</div>
-</div>
-</div>
-</div>
- 
-<!-- 系统段参数 -->
-<div id="syssegs" class="sys-params" style="display:none">
-<div id="seloffs" class="param-row">
-<div class="form-group">
-<label for="sel">选择子 (Selector):</label>
-<input type="text" id="sel" value="0x0000">
-</div>
-<div class="form-group">
-<label for="offset">偏移量 (Offset):</label>
-<input type="text" id="offset" value="0x00000000">
-</div>
-</div>
- 
-<div id="baseoffs" class="param-row" style="display:none">
-<div class="form-group">
-<label for="base_tss">基地址 (Base):</label>
-<input type="text" id="base_tss" value="0x00000000" maxlength="10">
-</div>
-<div class="form-group">
-<label for="limit_tss">界限 (TSS大小):</label>
-<input type="text" id="limit_tss" value="134" maxlength="7">
-</div>
-</div>
- 
-<div class="form-group">
-<label for="systypes">系统段类型:</label>
-<select id="systypes">
-<option value="0">无效0 (Invalid0)</option>
-<option value="1">286 可用TSS (286 Available TSS)</option>
-<option value="2">本地描述符表 (Local Descriptor Table)</option>
-<option value="3">286 忙TSS (286 Busy TSS)</option>
-<option value="4">286 调用门 (286 Call Gate)</option>
-<option value="5">任务门 (Task Gate)</option>
-<option value="6">286 中断门 (286 Interrupt Gate)</option>
-<option value="7">286 陷阱门 (286 Trap Gate)</option>
-<option value="8">无效8 (Invalid8)</option>
-<option value="9">386 可用TSS (386 Available TSS)</option>
-<option value="10">无效A (InvalidA)</option>
-<option value="11">386 忙TSS (386 Busy TSS)</option>
-<option value="12">386 调用门 (386 Call Gate)</option>
-<option value="13">无效D (InvalidD)</option>
-<option value="14">386 中断门 (386 Interrupt Gate)</option>
-<option value="15">386 陷阱门 (386 Trap Gate)</option>
-</select>
-</div>
- 
-<div id="callgate" style="display:none">
-<div class="form-group">
-<label for="params">调用门参数数量 (0-31):</label>
-<input type="text" id="params" value="0">
-</div>
-</div>
- 
-<!-- 系统段通用参数 -->
-<div class="first-row-params">
-<div class="checkbox-group">
-<input type="checkbox" id="accessed_sys">
-<label for="accessed_sys">已访问 (Accessed)</label>
-</div>
- 
-<div class="checkbox-group">
-<input type="checkbox" id="granularity_sys" checked>
-<label for="granularity_sys">粒度 (Granularity, 1=4KB, 0=1B) </label>
-</div>
-</div>
-</div>
- 
-<!-- 第二行：DPL和三个复选框 -->
-<div class="second-row-params">
-<div class="second-row-item dpl-container">
-<div class="form-group" style="margin-bottom: 0;">
-<label for="dpl">描述符特权级 (DPL):</label>
-<input type="text" id="dpl" class="dpl-input" value="0">
-<div class="field-description" style="margin-top: 5px;">0-3 (0为最高特权)</div>
-</div>
-</div>
- 
-<div class="second-row-item checkbox-container">
-<input type="checkbox" id="present" checked>
-<label for="present">存在 (Present)</label>
-</div>
- 
-<div class="second-row-item checkbox-container">
-<input type="checkbox" id="avl">
-<label for="avl">可用位 (Available bit)</label>
-</div>
- 
-<div class="second-row-item checkbox-container">
-<input type="checkbox" id="sz" checked>
-<label for="sz">32位模式 (32-bit) </label>
-</div>
-</div>
- 
-<div id="message-area" class="message-area"></div>
-</div>
- 
-<div class="results-panel">
-<h2 class="section-title">描述符计算结果</h2>
- 
-<div class="result-section">
-<h3>描述符值 (8字节)</h3>
- 
-<div class="result-format">
-<span class="result-label">双字 (dd):</span>
-<div class="result-value">
-<span id="dwords" class="hex-display">0x00000000, 0x00000000</span>
-</div>
-</div>
- 
-<div class="result-format">
-<span class="result-label">字 (dw):</span>
-<div class="result-value">
-<span id="words" class="hex-display">0x0000, 0x0000, 0x0000, 0x0000</span>
-</div>
-</div>
- 
-<div class="result-format">
-<span class="result-label">字节 (db):</span>
-<div class="result-value">
-<span id="bytes" class="hex-display">0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00</span>
-</div>
-</div>
-</div>
- 
-<div class="result-section">
-<h3>描述符结构可视化</h3>
-<div class="descriptor-visual">
-<div id="byte-visualization" style="width:100%; text-align:center; padding:20px;">
-修改参数以查看描述符结构
-</div>
-</div>
-</div>
-</div>
- 
-<div class="analysis-panel">
-<h2 class="section-title">字段解析</h2>
- 
-<div id="field-analysis" class="field-analysis-grid">
-<div class="field-item">
-<div class="field-name">基地址 (Base)</div>
-<div class="field-value" id="field-base">0x00000000</div>
-<div class="field-bits">位 16-39, 56-63</div>
-<div class="field-description-text">段的起始线性地址</div>
-</div>
- 
-<div class="field-item">
-<div class="field-name">界限 (Limit)</div>
-<div class="field-value" id="field-limit">0x000FFFFF</div>
-<div class="field-bits">位 0-15, 48-51</div>
-<div class="field-description-text">段的大小-1 (字节)</div>
-</div>
- 
-<div class="field-item">
-<div class="field-name">段长度</div>
-<div class="field-value" id="field-length">0 B</div>
-<div class="field-bits">-</div>
-<div class="field-description-text">根据段界限、粒度和扩展方向计算的段总长度</div>
-</div>
- 
-<div class="field-item">
-<div class="field-name">类型 (Type)</div>
-<div class="field-value" id="field-type">0x0 (数据段)</div>
-<div class="field-bits">位 40-43</div>
-<div class="field-description-text" id="field-type-desc">描述符类型和属性</div>
-</div>
- 
-<div class="field-item">
-<div class="field-name">描述符特权级 (DPL)</div>
-<div class="field-value" id="field-dpl">0</div>
-<div class="field-bits">位 45-46</div>
-<div class="field-description-text">描述符特权级别 (0-3)</div>
-</div>
- 
-<div class="field-item">
-<div class="field-name">存在位 (P)</div>
-<div class="field-value" id="field-present">1 (存在)</div>
-<div class="field-bits">位 47</div>
-<div class="field-description-text">段是否存在于内存中</div>
-</div>
- 
-<div class="field-item">
-<div class="field-name">粒度 (G)</div>
-<div class="field-value" id="field-granularity">1 (4KB)</div>
-<div class="field-bits">位 55</div>
-<div class="field-description-text">界限的粒度 (0=1字节, 1=4KB)</div>
-</div>
- 
-<div class="field-item">
-<div class="field-name">默认操作大小 (D/B)</div>
-<div class="field-value" id="field-size">1 (32位)</div>
-<div class="field-bits">位 54</div>
-<div class="field-description-text">默认操作数大小 (0=16位, 1=32位)</div>
-</div>
- 
-<div class="field-item">
-<div class="field-name">可用位 (AVL)</div>
-<div class="field-value" id="field-avl">0</div>
-<div class="field-bits">位 52</div>
-<div class="field-description-text">可供系统软件使用</div>
-</div>
-</div>
-</div>
-</div>
- 
-<script>
-// 全局变量
-let curType = "app";
-let curAppType = "data";
- 
-// DOM元素获取函数
-function $(id) {
-return document.getElementById(id);
-}
- 
-// 初始化函数
-function init() {
-// 绑定事件
-bindEvents();
- 
-// 初始化描述符类型选择
-replaceType("app");
- 
-// 初始化应用程序段类型选择
-switchAppType("data");
- 
-// 更新系统段类型参数显示
-updateParams($("systypes").value);
- 
-// 初始计算
-recalc();
-}
- 
-// 绑定所有事件
-function bindEvents() {
-// 描述符类型选择
-const typeOptions = document.querySelectorAll(".segment-type-option");
-typeOptions.forEach(option => {
-option.addEventListener("click", function() {
-const type = this.getAttribute("data-type");
-replaceType(type);
-});
-});
- 
-// 应用程序段类型选择
-const appTypeOptions = document.querySelectorAll(".app-seg-type-option");
-appTypeOptions.forEach(option => {
-option.addEventListener("click", function() {
-const type = this.getAttribute("data-type");
-switchAppType(type);
-});
-});
- 
-// 系统段类型选择
-$("systypes").addEventListener("change", function() {
-updateParams(this.value);
-});
- 
-// 所有输入变化时自动计算
-const inputs = document.querySelectorAll("input, select");
-inputs.forEach(input => {
-input.addEventListener("change", recalc);
-if (input.type === "text" || input.type === "checkbox") {
-input.addEventListener("input", recalc);
-}
-});
- 
-// 同步系统和应用程序段的已访问和粒度复选框
-$("accessed").addEventListener("change", function() {
-$("accessed_sys").checked = this.checked;
-recalc();
-});
- 
-$("accessed_sys").addEventListener("change", function() {
-$("accessed").checked = this.checked;
-recalc();
-});
- 
-$("granularity").addEventListener("change", function() {
-$("granularity_sys").checked = this.checked;
-recalc();
-});
- 
-$("granularity_sys").addEventListener("change", function() {
-$("granularity").checked = this.checked;
-recalc();
-});
- 
-// 基地址和界限输入框格式化（自动加0x、小写转大写）
-const hexInputs = [$("base"), $("limit"), $("base_tss"), $("limit_tss")];
-hexInputs.forEach(input => {
-if (input) {
-input.addEventListener("input", formatHexInput);
-input.addEventListener("focus", function() {
-if (this.value === "0x0") {
-this.setSelectionRange(2, 2);
-} else if (this.value.startsWith("0x")) {
-this.setSelectionRange(this.value.length, this.value.length);
-}
-});
-}
-});
-}
- 
-// 格式化十六进制输入（自动加小写0x前缀、十六进制字符大写、过滤非法字符）
-function formatHexInput(event) {
-let input = event.target;
-let value = input.value.trim();
- 
-// 确保前缀是小写的0x
-if (!value.startsWith('0x')) {
-// 移除可能的0X前缀，然后加小写0x
-value = '0x' + value.replace(/^0x|0X/, '');
-}
- 
-// 去掉非十六进制字符（只保留0-9A-Fa-f和x）
-value = value.replace(/[^0-9A-Fa-fx]/g, '');
- 
-// 把x后的字符转大写，保留x为小写
-const parts = value.split('x');
-if (parts.length === 2) {
-value = '0x' + parts[1].toUpperCase();
-} else {
-value = '0x0'; // 异常情况默认0x0
-}
- 
-// 限制长度（maxlength已经设置，这里再过滤）
-if (value.length > input.maxLength) {
-value = value.substring(0, input.maxLength);
-}
- 
-// 处理只有0x的情况
-if (value === '0x') {
-value = '0x0';
-}
- 
-// 更新输入框值，保持光标位置
-const cursorPos = input.selectionStart;
-input.value = value;
-// 恢复光标位置（如果在0x之后）
-if (cursorPos <= 2) {
-input.setSelectionRange(2, 2);
-} else {
-// 光标位置不超过输入框长度
-const newPos = Math.min(cursorPos, value.length);
-input.setSelectionRange(newPos, newPos);
-}
-}
- 
-// 切换描述符类型
-function replaceType(type) {
-curType = type;
- 
-// 更新UI
-const typeOptions = document.querySelectorAll(".segment-type-option");
-typeOptions.forEach(option => {
-if (option.getAttribute("data-type") === type) {
-option.classList.add("active");
-} else {
-option.classList.remove("active");
-}
-});
- 
-// 显示/隐藏对应的参数面板
-if (type === "app") {
-$("appsegs").style.display = "block";
-$("syssegs").style.display = "none";
-} else {
-$("appsegs").style.display = "none";
-$("syssegs").style.display = "block";
-}
- 
-// 重新计算
-recalc();
-}
- 
-// 切换应用程序段类型
-function switchAppType(type) {
-curAppType = type;
- 
-// 更新UI
-const appTypeOptions = document.querySelectorAll(".app-seg-type-option");
-appTypeOptions.forEach(option => {
-if (option.getAttribute("data-type") === type) {
-option.classList.add("active");
-} else {
-option.classList.remove("active");
-}
-});
- 
-// 显示/隐藏对应的参数
-if (type === "data") {
-$("data-seg-params").style.display = "block";
-$("code-seg-params").style.display = "none";
-} else {
-$("data-seg-params").style.display = "none";
-$("code-seg-params").style.display = "block";
-// 代码段强制取消向下扩展（代码段不支持向下扩展）
-$("expand").checked = false;
-}
- 
-// 重新计算
-recalc();
-}
- 
-// 更新系统段参数显示
-function updateParams(value) {
-value = parseInt(value);
- 
-// 根据系统段类型显示/隐藏相关参数
-switch (value) {
-case 1: // 286 Available TSS
-case 3: // 286 Busy TSS
-case 9: // 386 Available TSS
-case 11: // 386 Busy TSS
-$("callgate").style.display = "none";
-$("seloffs").style.display = "none";
-$("baseoffs").style.display = "flex";
-break;
-case 4: // 286 Call Gate
-case 12: // 386 Call Gate
-$("callgate").style.display = "block";
-$("seloffs").style.display = "flex";
-$("baseoffs").style.display = "none";
-break;
-default:
-$("callgate").style.display = "none";
-$("seloffs").style.display = "flex";
-$("baseoffs").style.display = "none";
-break;
-}
- 
-// 重新计算
-recalc();
-}
- 
-// 获取数值输入
-function getVal(id) {
-const elem = $(id);
-if (!elem) return 0;
- 
-const val = elem.value.trim();
-if (!val) return 0;
- 
-// 尝试解析十六进制或十进制
-if (val.startsWith("0x") || val.startsWith("0X")) {
-return parseInt(val, 16) | 0;
-} else {
-return parseInt(val, 10) | 0;
-}
-}
- 
-// 获取布尔值输入
-function getBool(id) {
-const elem = $(id);
-return elem ? elem.checked : false;
-}
- 
-// 格式化数组为十六进制字符串
-function arr2s(arr, format) {
-const arr2 = new Array(arr.length);
-for (let i = 0; i < arr.length; i++) {
-arr2[i] = arr[i] >>> 0;
-}
- 
-const lut = {2: 8, 4: 4, 8: 2};
-const l = lut[arr.length] || 2;
-const arr3 = [];
- 
-for (let i = 0; i < arr.length; i++) {
-let elt = arr2[i].toString(16).toUpperCase();
-while (elt.length < l) elt = "0" + elt;
-arr3.push("0x" + elt);
-}
- 
-return arr3.join(", ");
-}
- 
-// 显示消息
-function showMessage(message, type) {
-const msgArea = $("message-area");
-msgArea.textContent = message;
-msgArea.className = "message-area " + type;
-}
- 
-// 清除消息
-function clearMessage() {
-const msgArea = $("message-area");
-msgArea.textContent = "";
-msgArea.className = "message-area";
-}
- 
-// 生成字节可视化
-function generateByteVisualization(desc8) {
-const byteDescriptions = [
-"Limit 7:0",
-"Limit 15:8",
-"Base 7:0",
-"Base 15:8",
-"Base 23:16",
-"Type & DPL & P",
-"Limit 19:16 & Flags",
-"Base 31:24"
-];
- 
-let html = '<div style="display: flex; flex-wrap: wrap; justify-content: space-between;">';
-for (let i = 0; i < 8; i++) {
-const byteValue = desc8[i].toString(16).padStart(2, '0').toUpperCase();
-html += `
-<div class="byte-block">
-<div class="byte-header">字节 ${i}</div>
-<div class="byte-value">0x${byteValue}</div>
-<div class="byte-desc">${byteDescriptions[i]}</div>
-</div>
-`;
-}
-html += '</div>';
- 
-return html;
-}
- 
-// 计算段长度（严格按用户给出的最终规则）
-function calculateSegmentLength(limit20, isExpandDown, granularity, is32Bit, segType) {
-// 1. 代码段强制为向上扩展（不支持向下扩展）
-if (segType === "code") {
-isExpandDown = false;
-}
- 
-// 2. 确保limit20是20位有效范围（0x0 到 0xFFFFF）
-limit20 = limit20 & 0xFFFFF;
-let length = 0;
-let lowerBound = 0;
- 
-if (!isExpandDown) {
-// ========== 向上扩展段（代码段/E=0数据段） ==========
-if (granularity === 0) {
-// G=0 字节粒度：长度 = Limit + 1
-length = limit20 + 1;
-} else {
-// G=1 4KB页粒度：长度 = (Limit + 1) × 4096
-length = (limit20 + 1) * 4096;
-}
-} else {
-// ========== 向下扩展段（仅E=1数据段） ==========
-if (granularity === 0) {
-// G=0 字节粒度：下限 = Limit + 1
-lowerBound = limit20 + 1;
-} else {
-// G=1 4KB页粒度：下限 = (Limit << 12) + 0x1000 = Limit*4096 + 4096
-lowerBound = (limit20 << 12) + 0x1000;
-}
- 
-// 计算最大偏移值
-const maxOffset = is32Bit ? 0x100000000 : 0x10000;
- 
-// 当下限 >= 最大偏移时，段长度为0
-if (lowerBound >= maxOffset) {
-length = 0;
-} else {
-// 长度 = 最大偏移 - 下限
-length = maxOffset - lowerBound;
-}
-}
- 
-// 3. 单位转换：严格按规则（<1KB→B，≥1KB<1MB→KB，≥1MB<1GB→MB，≥1GB→GB）
-if (length < 1024) {
-return `${length} B`;
-} else if (length < 1024 * 1024) {
-const kb = length / 1024;
-return `${kb.toFixed(2)} KB`;
-} else if (length < 1024 * 1024 * 1024) {
-const mb = length / (1024 * 1024);
-return `${mb.toFixed(2)} MB`;
-} else {
-const gb = length / (1024 * 1024 * 1024);
-return `${gb.toFixed(2)} GB`;
-}
-}
- 
-// 更新字段分析
-function updateFieldAnalysis(desc8, base, isTSS, appType) {
-const typeByte = desc8[5];
-const flagsByte = desc8[6];
- 
-// 提取字段
-const type = typeByte & 0x1F;
-const dpl = (typeByte >> 5) & 0x03;
-const present = (typeByte >> 7) & 0x01;
- 
-const limitLow = (desc8[0] | (desc8[1] << 8)) & 0xFFFF;
-const limitHigh = flagsByte & 0x0F;
-const fullLimit = limitLow | (limitHigh << 16);
- 
-const avl = (flagsByte >> 4) & 0x01;
-const sz = (flagsByte >> 6) & 0x01;
-const gran = (flagsByte >> 7) & 0x01;
- 
-const baseLow = (desc8[2] | (desc8[3] << 8) | (desc8[4] << 16)) & 0xFFFFFF;
-const baseHigh = desc8[7];
-const fullBase = baseLow | (baseHigh << 24);
- 
-// 更新基础字段显示
-$("field-base").textContent = "0x" + fullBase.toString(16).toUpperCase().padStart(8, '0');
-$("field-limit").textContent = "0x" + fullLimit.toString(16).toUpperCase().padStart(5, '0');
-$("field-type").textContent = "0x" + type.toString(16).toUpperCase() + " (" + getTypeDescription(type, curType, appType) + ")";
-$("field-dpl").textContent = dpl;
-$("field-present").textContent = present + (present ? " (存在)" : " (不存在)");
-$("field-granularity").textContent = gran + (gran ? " (4KB)" : " (1字节)");
-$("field-size").textContent = sz + (sz ? " (32位)" : " (16位)");
-$("field-avl").textContent = avl;
- 
-// 更新类型描述
-$("field-type-desc").textContent = getDetailedTypeDescription(type, curType, appType);
- 
-// 计算并更新段长度
-if (curType === "app") {
-// 仅应用程序段计算长度
-const isExpandDown = (appType === "data") && getBool("expand");
-const segmentLength = calculateSegmentLength(fullLimit, isExpandDown, gran, sz, appType);
-$("field-length").textContent = segmentLength;
-} else {
-// 系统段长度无意义
-$("field-length").textContent = "不适用";
-}
-}
- 
-// 获取类型描述
-function getTypeDescription(type, descType, appType) {
-if (descType === "app") {
-if (appType === "data") {
-return "数据段";
-} else {
-return "代码段";
-}
-} else {
-const sysTypes = {
-0: "无效0", 1: "286可用TSS", 2: "LDT", 3: "286忙TSS",
-4: "286调用门", 5: "任务门", 6: "286中断门", 7: "286陷阱门",
-8: "无效8", 9: "386可用TSS", 10: "无效A", 11: "386忙TSS",
-12: "386调用门", 13: "无效D", 14: "386中断门", 15: "386陷阱门"
-};
-return sysTypes[type] || "未知类型";
-}
-}
- 
-// 获取详细类型描述
-function getDetailedTypeDescription(type, descType, appType) {
-if (descType === "app") {
-if (appType === "data") {
-let desc = "数据段";
-if (type & 0x02) desc += "，可写";
-if (type & 0x04) desc += "，向下扩展";
-if (type & 0x01) desc += "，已访问";
-return desc;
-} else {
-let desc = "代码段";
-if (type & 0x02) desc += "，可读";
-if (type & 0x04) desc += "，一致段";
-if (type & 0x01) desc += "，已访问";
-return desc;
-}
-} else {
-return getTypeDescription(type, descType, appType);
-}
-}
- 
-// 主计算函数
-function recalc() {
-try {
-clearMessage();
- 
-let base, limit, gran = 0;
-let isTSS = false;
- 
-// 创建描述符数组
-const desc = new Int32Array(2);
-const desc16 = new Uint16Array(desc.buffer);
-const desc8 = new Uint8Array(desc.buffer);
- 
-// 获取粒度设置
-let manualGran = 0;
-if (curType === "app") {
-manualGran = getBool("granularity") ? 1 : 0;
-} else {
-manualGran = getBool("granularity_sys") ? 1 : 0;
-}
- 
-if (curType === "app") {
-// 应用程序段
-base = getVal("base");
-let rawLimit = getVal("limit") >>> 0; // 保存原始界限值（未处理粒度）
-limit = rawLimit; // 用于描述符存储的界限值
- 
-// 应用粒度（仅用于描述符存储，计算长度用fullLimit）
-gran = manualGran;
-if (gran === 1) {
-// 4KB粒度：界限字段存储页数-1（右移12位）
-if ((rawLimit & 0xFFF) !== 0xFFF) {
-showMessage("注意: 界限值不是4KB对齐，在使用4KB粒度时可能产生意外结果", "warning");
-}
-limit >>>= 12;
-}
- 
-desc[0] = (limit & 0xFFFF) | ((base & 0xFFFF) << 16);
-desc8[4] = (base >> 16) & 0xFF;
- 
-} else {
-// 系统段
-const sysType = getVal("systypes");
-const tssSegs = [1, 3, 9, 11];
-isTSS = tssSegs.includes(sysType);
- 
-if (isTSS) {
-// TSS类型
-base = getVal("base_tss");
-let rawLimit = getVal("limit_tss") >>> 0; // 原始界限值
-limit = rawLimit;
- 
-// 应用粒度
-gran = manualGran;
-if (gran === 1) {
-if ((rawLimit & 0xFFF) !== 0xFFF) {
-showMessage("注意: 界限值不是4KB对齐，在使用4KB粒度时可能产生意外结果", "warning");
-}
-limit >>>= 12;
-}
- 
-desc[0] = (limit & 0xFFFF) | ((base & 0xFFFF) << 16);
-desc8[4] = (base >> 16) & 0xFF;
-} else {
-// 门描述符
-const sel = getVal("sel");
-const offset = getVal("offset");
- 
-desc16[1] = sel;
-desc16[0] = offset;
-desc8[4] = 0;
-}
-}
- 
-// 获取类型字段
-let typeVal = 0;
- 
-if (curType === "app") {
-// 应用程序段类型
-let accessedVal = 0;
-if (curType === "app") {
-accessedVal = getBool("accessed") ? 1 : 0;
-} else {
-accessedVal = getBool("accessed_sys") ? 1 : 0;
-}
-typeVal = accessedVal;
- 
-if (curAppType === "data") {
-if (getBool("writable")) typeVal |= 0x02;
-if (getBool("expand")) typeVal |= 0x04;
-} else {
-if (getBool("readable")) typeVal |= 0x02;
-if (getBool("conforming")) typeVal |= 0x04;
-typeVal |= 0x08; // 代码段
-}
- 
-typeVal |= 0x10; // 代码/数据段描述符
-} else {
-// 系统段类型
-typeVal = getVal("systypes");
- 
-// 调用门参数计数
-if ((typeVal & 7) === 4) { // 调用门类型
-desc8[4] = getVal("params") & 31;
-}
-}
- 
-// 添加DPL和存在位
-const dpl = getVal("dpl") & 0x03;
-typeVal |= (dpl << 5);
- 
-if (getBool("present")) {
-typeVal |= 0x80;
-}
- 
-desc8[5] = typeVal;
- 
-// 设置标志位
-if (curType === "app" || isTSS) {
-let flags = (limit >> 16) & 0x0F;
- 
-if (!isTSS) {
-// 应用程序段的标志位
-if (getBool("avl")) flags |= 0x10;
-if (getBool("sz")) flags |= 0x40;
-}
- 
-// 设置粒度位
-if (gran) flags |= 0x80;
- 
-desc8[6] = flags;
-desc8[7] = (base >> 24) & 0xFF;
-} else {
-// 门描述符的偏移高位
-const offset = getVal("offset");
-desc16[3] = (offset >>> 16) & 0xFFFF;
-}
- 
-// 显示结果
-$("dwords").textContent = arr2s(desc, 2);
-$("words").textContent = arr2s(desc16, 4);
-$("bytes").textContent = arr2s(desc8, 8);
- 
-// 生成字节可视化
-$("byte-visualization").innerHTML = generateByteVisualization(desc8);
- 
-// 更新字段分析
-updateFieldAnalysis(desc8, base, isTSS, curAppType);
- 
-} catch (error) {
-showMessage("计算错误: " + error.message, "error");
-console.error(error);
-}
-}
- 
-// 页面加载完成后初始化
-document.addEventListener("DOMContentLoaded", init);
-</script>
+    <div class="container">
+        <header>
+            <h1>x86 描述符计算器</h1>
+        </header>
+        
+        <div class="settings-panel">
+            <h2 class="section-title">描述符参数</h2>
+            
+            <div class="form-group">
+                <label>描述符类型:</label>
+                <div class="segment-type-selector">
+                    <div class="segment-type-option active" data-type="app">应用程序 (代码/数据)</div>
+                    <div class="segment-type-option" data-type="sys">系统 (IDT/门/TSS等)</div>
+                </div>
+            </div>
+            
+            <!-- 应用程序段参数 -->
+            <div id="appsegs" class="app-params">
+                <div class="param-row">
+                    <div class="form-group">
+                        <label for="base">基地址 (Base):</label>
+                        <input type="text" id="base" value="0x00000000" maxlength="10">
+                        <div class="field-description">32位线性地址</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="limit">界限 (Limit):</label>
+                        <input type="text" id="limit" value="0xFFFFF" maxlength="7">
+                        <div class="field-description">段的大小-1 (字节)</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>应用程序段类型:</label>
+                    <div class="app-seg-type-selector">
+                        <div class="app-seg-type-option active" data-type="data">数据段</div>
+                        <div class="app-seg-type-option" data-type="code">代码段</div>
+                    </div>
+                </div>
+                
+                <!-- 应用程序段特定参数 -->
+                <div class="app-seg-params-container">
+                    <!-- 第一行：代码段/数据段特定参数 + 通用参数 -->
+                    <div class="first-row-params">
+                        <!-- 数据段参数 -->
+                        <div id="data-seg-params">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="expand">
+                                <label for="expand">向下扩展 (Expand Down)</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="writable">
+                                <label for="writable">可写 (Writable)</label>
+                            </div>
+                        </div>
+                        
+                        <!-- 代码段参数 -->
+                        <div id="code-seg-params" style="display:none">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="conforming">
+                                <label for="conforming">一致段 (Conforming)</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="readable" checked>
+                                <label for="readable">可读 (Readable)</label>
+                            </div>
+                        </div>
+                        
+                        <!-- 通用参数 -->
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="accessed">
+                            <label for="accessed">已访问 (Accessed)</label>
+                        </div>
+                        
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="granularity" checked>
+                            <label for="granularity">粒度 (Granularity, 1=4KB, 0=1B)  </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 系统段参数 -->
+            <div id="syssegs" class="sys-params" style="display:none">
+                <div id="seloffs" class="param-row">
+                    <div class="form-group">
+                        <label for="sel">选择子 (Selector):</label>
+                        <input type="text" id="sel" value="0x0000">
+                    </div>
+                    <div class="form-group">
+                        <label for="offset">偏移量 (Offset):</label>
+                        <input type="text" id="offset" value="0x00000000">
+                    </div>
+                </div>
+                
+                <div id="baseoffs" class="param-row" style="display:none">
+                    <div class="form-group">
+                        <label for="base_tss">基地址 (Base):</label>
+                        <input type="text" id="base_tss" value="0x00000000" maxlength="10">
+                    </div>
+                    <div class="form-group">
+                        <label for="limit_tss">界限 (TSS大小):</label>
+                        <input type="text" id="limit_tss" value="134" maxlength="7">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="systypes">系统段类型:</label>
+                    <select id="systypes">
+                        <option value="0">无效0 (Invalid0)</option>
+                        <option value="1">286 可用TSS (286 Available TSS)</option>
+                        <option value="2">本地描述符表 (Local Descriptor Table)</option>
+                        <option value="3">286 忙TSS (286 Busy TSS)</option>
+                        <option value="4">286 调用门 (286 Call Gate)</option>
+                        <option value="5">任务门 (Task Gate)</option>
+                        <option value="6">286 中断门 (286 Interrupt Gate)</option>
+                        <option value="7">286 陷阱门 (286 Trap Gate)</option>
+                        <option value="8">无效8 (Invalid8)</option>
+                        <option value="9">386 可用TSS (386 Available TSS)</option>
+                        <option value="10">无效A (InvalidA)</option>
+                        <option value="11">386 忙TSS (386 Busy TSS)</option>
+                        <option value="12">386 调用门 (386 Call Gate)</option>
+                        <option value="13">无效D (InvalidD)</option>
+                        <option value="14">386 中断门 (386 Interrupt Gate)</option>
+                        <option value="15">386 陷阱门 (386 Trap Gate)</option>
+                    </select>
+                </div>
+                
+                <div id="callgate" style="display:none">
+                    <div class="form-group">
+                        <label for="params">调用门参数数量 (0-31):</label>
+                        <input type="text" id="params" value="0">
+                    </div>
+                </div>
+                
+                <!-- 系统段通用参数 -->
+                <div class="first-row-params">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="accessed_sys">
+                        <label for="accessed_sys">已访问 (Accessed)</label>
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="granularity_sys" checked>
+                        <label for="granularity_sys">粒度 (Granularity, 1=4KB, 0=1B) </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 第二行：DPL和三个复选框 -->
+            <div class="second-row-params">
+                <div class="second-row-item dpl-container">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="dpl">描述符特权级 (DPL):</label>
+                        <input type="text" id="dpl" class="dpl-input" value="0">
+                        <div class="field-description" style="margin-top: 5px;">0-3 (0为最高特权)</div>
+                    </div>
+                </div>
+                
+                <div class="second-row-item checkbox-container">
+                    <input type="checkbox" id="present" checked>
+                    <label for="present">存在 (Present)</label>
+                </div>
+                
+                <div class="second-row-item checkbox-container">
+                    <input type="checkbox" id="avl">
+                    <label for="avl">可用位 (Available bit)</label>
+                </div>
+                
+                <div class="second-row-item checkbox-container">
+                    <input type="checkbox" id="sz" checked>
+                    <label for="sz">32位模式 (32-bit) </label>
+                </div>
+            </div>
+            
+            <div id="message-area" class="message-area"></div>
+        </div>
+        
+        <div class="results-panel">
+            <h2 class="section-title">描述符计算结果</h2>
+            
+            <div class="result-section">
+                <h3>描述符值 (8字节)</h3>
+                
+                <div class="result-format">
+                    <span class="result-label">双字 (dd):</span>
+                    <div class="result-value">
+                        <span id="dwords" class="hex-display">0x00000000, 0x00000000</span>
+                    </div>
+                </div>
+                
+                <div class="result-format">
+                    <span class="result-label">字 (dw):</span>
+                    <div class="result-value">
+                        <span id="words" class="hex-display">0x0000, 0x0000, 0x0000, 0x0000</span>
+                    </div>
+                </div>
+                
+                <div class="result-format">
+                    <span class="result-label">字节 (db):</span>
+                    <div class="result-value">
+                        <span id="bytes" class="hex-display">0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="result-section">
+                <h3>描述符结构可视化</h3>
+                <div class="descriptor-visual">
+                    <div id="byte-visualization" style="width:100%; text-align:center; padding:20px;">
+                        修改参数以查看描述符结构
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="analysis-panel">
+            <h2 class="section-title">字段解析</h2>
+            
+            <div id="field-analysis" class="field-analysis-grid">
+                <div class="field-item">
+                    <div class="field-name">基地址 (Base)</div>
+                    <div class="field-value" id="field-base">0x00000000</div>
+                    <div class="field-bits">位 16-39, 56-63</div>
+                    <div class="field-description-text">段的起始线性地址</div>
+                </div>
+                
+                <div class="field-item">
+                    <div class="field-name">界限 (Limit)</div>
+                    <div class="field-value" id="field-limit">0x000FFFFF</div>
+                    <div class="field-bits">位 0-15, 48-51</div>
+                    <div class="field-description-text">段的大小-1 (字节)</div>
+                </div>
+
+                <div class="field-item">
+                    <div class="field-name">段长度</div>
+                    <div class="field-value" id="field-length">0 B</div>
+                    <div class="field-bits">-</div>
+                    <div class="field-description-text">根据段界限、粒度和扩展方向计算的段总长度</div>
+                </div>
+                
+                <div class="field-item">
+                    <div class="field-name">类型 (Type)</div>
+                    <div class="field-value" id="field-type">0x0 (数据段)</div>
+                    <div class="field-bits">位 40-43</div>
+                    <div class="field-description-text" id="field-type-desc">描述符类型和属性</div>
+                </div>
+                
+                <div class="field-item">
+                    <div class="field-name">描述符特权级 (DPL)</div>
+                    <div class="field-value" id="field-dpl">0</div>
+                    <div class="field-bits">位 45-46</div>
+                    <div class="field-description-text">描述符特权级别 (0-3)</div>
+                </div>
+                
+                <div class="field-item">
+                    <div class="field-name">存在位 (P)</div>
+                    <div class="field-value" id="field-present">1 (存在)</div>
+                    <div class="field-bits">位 47</div>
+                    <div class="field-description-text">段是否存在于内存中</div>
+                </div>
+                
+                <div class="field-item">
+                    <div class="field-name">粒度 (G)</div>
+                    <div class="field-value" id="field-granularity">1 (4KB)</div>
+                    <div class="field-bits">位 55</div>
+                    <div class="field-description-text">界限的粒度 (0=1字节, 1=4KB)</div>
+                </div>
+                
+                <div class="field-item">
+                    <div class="field-name">默认操作大小 (D/B)</div>
+                    <div class="field-value" id="field-size">1 (32位)</div>
+                    <div class="field-bits">位 54</div>
+                    <div class="field-description-text">默认操作数大小 (0=16位, 1=32位)</div>
+                </div>
+                
+                <div class="field-item">
+                    <div class="field-name">可用位 (AVL)</div>
+                    <div class="field-value" id="field-avl">0</div>
+                    <div class="field-bits">位 52</div>
+                    <div class="field-description-text">可供系统软件使用</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="static/js/descriptor.js"></script>
 </body>
 </html>
