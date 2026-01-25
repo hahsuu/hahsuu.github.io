@@ -1,49 +1,108 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
-    <title>x86 描述符计算器 (应用+系统段完整版)</title>
+    <title>x86 描述符计算器 (应用+系统段完整版_含解析)</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         /* 核心修改：替换为深色主题变量 */
-        :root { 
-            --primary: #165DFF; /* 图片主蓝 */
+        :root {
+            --primary: #165DFF;
+            /* 图片主蓝 */
             --primary-hover: #0E4BDB;
             --primary-active: #0A3BC8;
             --success: #00B42A;
             --warning: #FF7D00;
-            --bg: #0F172A; /* 整体深色背景 */
-            --card-bg: #1E293B; /* 卡片背景 */
-            --input-bg: #0F172A; /* 输入框背景 */
-            --text-primary: #E2E8F0; /* 主文本色 */
-            --text-secondary: #94A3B8; /* 次要文本色 */
-            --border-color: #334155; /* 边框色 */
-            --tab-inactive: #273449; /* 未选中选项卡背景 */
-            --tab-active: var(--primary); /* 选中选项卡背景 */
+            --bg: #0F172A;
+            /* 整体深色背景 */
+            --card-bg: #1E293B;
+            /* 卡片背景 */
+            --input-bg: #0F172A;
+            /* 输入框背景 */
+            --text-primary: #E2E8F0;
+            /* 主文本色 */
+            --text-secondary: #94A3B8;
+            /* 次要文本色 */
+            --border-color: #334155;
+            /* 边框色 */
+            --tab-inactive: #273449;
+            /* 未选中选项卡背景 */
+            --tab-active: var(--primary);
+            /* 选中选项卡背景 */
         }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        body { 
-            font-family: system-ui, sans-serif; 
-            background: var(--bg); 
-            color: var(--text-primary); 
-            padding: 20px; 
-            max-width: 900px; 
-            margin: 0 auto; 
+
+        body {
+            font-family: system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            padding: 20px;
+            max-width: 1600px;
+            /* 核心修改：放宽最大宽度限制 */
+            margin: 0 auto;
             line-height: 1.5;
         }
+
+        /* 父容器：Flex横向布局，占满可用宽度 */
+        .calculator-container {
+            display: flex;
+            /* 核心：启用Flex布局 */
+            flex-direction: row;
+            /* 横向排列（默认值，可省略） */
+            width: 100%;
+            /* 占满父级宽度 */
+            gap: 20px;
+            /* 左右模块之间的间距 */
+            box-sizing: border-box;
+            /* 避免边框/内边距导致溢出 */
+            padding: 0;
+            /* 核心修改：移除多余内边距，释放宽度 */
+        }
+
+        /* 左侧功能区：均分宽度（也可设固定宽度如400px） */
+        .calc-left {
+            flex: 1;
+            /* 占剩余宽度的1份 */
+            border: 1px solid #ccc;
+            /* 可选：加边框区分模块 */
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        /* 右侧解析区：均分宽度 */
+        .calc-right {
+            flex: 1;
+            /* 占剩余宽度的1份 */
+            border: 1px solid #ccc;
+            /* 可选：加边框区分模块 */
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        /* 适配小屏幕（可选）：屏幕窄时自动变回上下布局 */
+        @media (max-width: 768px) {
+            .calculator-container {
+                flex-direction: column;
+            }
+        }
+
         /* 卡片样式修改为深色 */
-        .card { 
-            background: var(--card-bg); 
-            padding: 24px; 
-            border-radius: 8px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
-            margin-bottom: 20px; 
+        .card {
+            background: var(--card-bg);
+            padding: 16px;
+            /* 优化：减少内边距，提升内部可用宽度 */
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
             border: 1px solid var(--border-color);
         }
+
         /* 选项卡容器样式（核心新增） */
         .tab-container {
             width: 100%;
@@ -52,6 +111,7 @@
             border-radius: 4px;
             overflow: hidden;
         }
+
         .tab-item {
             flex: 1;
             padding: 10px 0;
@@ -63,44 +123,53 @@
             font-size: 14px;
             transition: all 0.2s ease;
         }
+
         .tab-item.active {
             background: var(--tab-active);
             color: white;
             font-weight: 500;
         }
+
         .tab-item:hover:not(.active) {
             background: #334155;
         }
+
         /* 网格布局保留，调整间距 */
-        .grid { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 16px; 
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
             margin-bottom: 20px;
         }
-        .grid-3 { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr 1fr; 
-            gap: 16px; 
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
             margin-bottom: 20px;
         }
+
         /* 输入框/选择器深色样式 */
-        input, select { 
-            width: 100%; 
-            padding: 10px; 
-            border: 1px solid var(--border-color); 
-            border-radius: 4px; 
-            font-family: monospace; 
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: monospace;
             box-sizing: border-box;
             background: var(--input-bg);
             color: var(--text-primary);
             font-size: 14px;
         }
-        input:focus, select:focus {
+
+        input:focus,
+        select:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.2);
         }
+
         /* 标签样式 */
         label {
             display: block;
@@ -108,43 +177,76 @@
             color: var(--text-primary);
             font-size: 14px;
         }
+
         /* 辅助文本（如32位线性地址） */
         .helper-text {
             font-size: 12px;
             color: var(--text-secondary);
             margin-top: 4px;
         }
-        /* 复选框组样式适配深色 */
-        .checkbox-group { 
-            display: flex; 
-            flex-wrap: wrap; 
-            gap: 20px; 
-            background: #273449; 
-            padding: 16px; 
-            border-radius: 8px; 
-            margin: 16px 0; 
-            align-items: center;
+
+        .checkbox-group {
+            display: grid;
+            /* 改用Grid布局，比Flex更精准控制列对齐 */
+            grid-template-columns: repeat(2, 1fr);
+            /* 固定2列，宽度均分 */
+            gap: 20px 16px;
+            /* 行间距20px，列间距16px，更合理 */
+            background: #273449;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 16px 0;
         }
+
+        /* 单个checkbox条目样式 */
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            /* 垂直居中 */
+            cursor: pointer;
+            white-space: nowrap;
+            /* 核心：强制文字单行显示，不换行 */
+            overflow: hidden;
+            /* 防止极端情况文字溢出（可选） */
+            text-overflow: ellipsis;
+            /* 文字超长时显示省略号（可选） */
+        }
+
+        /* 统一checkbox的尺寸和位置，确保所有checkbox对齐 */
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            /* 固定checkbox宽度 */
+            height: 18px;
+            /* 固定checkbox高度 */
+            margin-right: 8px;
+            flex-shrink: 0;
+            /* 禁止压缩，保证尺寸统一 */
+        }
+
         .checkbox-item {
             display: flex;
             align-items: center;
             gap: 6px;
         }
+
         input[type="checkbox"] {
             width: 16px;
             height: 16px;
-            accent-color: var(--primary); /* 现代浏览器主色 */
+            accent-color: var(--primary);
+            /* 现代浏览器主色 */
             background: var(--input-bg);
             border: 1px solid var(--border-color);
             /* 修复：兼容旧浏览器（无accent-color）的复选框选中样式 */
             position: relative;
             appearance: none;
         }
+
         /* 修复：旧浏览器复选框选中状态兜底样式 */
         input[type="checkbox"]:checked {
             background: var(--primary);
             border-color: var(--primary);
         }
+
         input[type="checkbox"]:checked::after {
             content: "✓";
             position: absolute;
@@ -154,634 +256,1079 @@
             left: 50%;
             transform: translate(-50%, -50%);
         }
+
         /* 分析区深色样式 */
-        .analysis { 
-            border-left: 4px solid var(--success); 
-            background: #1E293B; 
-            padding: 16px; 
-            line-height: 1.8; 
+        .analysis {
+            border-left: 4px solid var(--success);
+            background: #1E293B;
+            padding: 16px;
+            line-height: 1.8;
             position: relative;
             color: var(--text-primary);
             border-radius: 0 4px 4px 0;
             margin-bottom: 16px;
         }
+
         /* 修复：新增计算错误提示样式 */
         .analysis.error {
             border-left-color: var(--warning);
             color: #FECDD3;
         }
-        .warning { 
-            color: var(--warning); 
-            font-weight: bold; 
-            margin-top: 8px; 
-            display: block; 
+
+        .warning {
+            color: var(--warning);
+            font-weight: bold;
+            margin-top: 8px;
+            display: block;
             font-size: 14px;
         }
+
         /* 代码区样式微调 */
-        .code-container { 
-            background: #0F172A; 
-            color: var(--text-primary); 
-            padding: 18px; 
-            border-radius: 8px; 
-            font-family: monospace; 
-            font-size: 0.9rem; 
+        .code-container {
+            background: #0F172A;
+            color: var(--text-primary);
+            padding: 18px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9rem;
             border: 1px solid var(--border-color);
         }
-        .code-row { 
-            display: flex; 
-            margin-bottom: 8px; 
-            border-bottom: 1px solid #334155; 
-            padding-bottom: 4px; 
+
+        .code-row {
+            display: flex;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 4px;
         }
-        .code-label { 
-            color: #38bdf8; 
-            width: 45px; 
-            font-weight: bold; 
+
+        .code-label {
+            color: #38bdf8;
+            width: 45px;
+            font-weight: bold;
         }
+
         /* 标题样式 */
-        h2, h3, h4 { 
-            color: var(--text-primary); 
-            margin-top: 0; 
-            margin-bottom: 16px; 
+        h2,
+        h3,
+        h4 {
+            color: var(--text-primary);
+            margin-top: 0;
+            margin-bottom: 16px;
             font-weight: 500;
         }
-        h2 { font-size: 28px; text-align: center; font-weight: 600; }
-        h3 { font-size: 18px; }
-        h4 { font-size: 16px; margin: 16px 0 8px 0; }
+
+        h2 {
+            font-size: 28px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        h3 {
+            font-size: 18px;
+        }
+
+        h4 {
+            font-size: 16px;
+            margin: 16px 0 8px 0;
+        }
+
         /* 按钮样式适配深色 */
-        button { 
-            width:100%; 
-            margin-top:20px; 
-            padding:12px; 
-            background:var(--primary); 
-            color:white; 
-            border:none; 
-            border-radius:6px; 
-            cursor:pointer; 
-            font-weight:500; 
-            transition: all 0.2s ease; 
+        button {
+            width: 100%;
+            margin-top: 20px;
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
             font-size: 14px;
         }
-        button:hover { background: var(--primary-hover); }
-        button:active { background: var(--primary-active); transform: scale(0.99); }
+
+        button:hover {
+            background: var(--primary-hover);
+        }
+
+        button:active {
+            background: var(--primary-active);
+            transform: scale(0.99);
+        }
+
         /* 代码标签样式 */
-        code { 
-            background: #273449; 
-            padding: 2px 6px; 
-            border-radius: 4px; 
+        code {
+            background: #273449;
+            padding: 2px 6px;
+            border-radius: 4px;
             color: #93C5FD;
         }
+
         /* 显隐类保留 */
-        .seg-section { display: block; }
-        .sys-param { margin: 10px 0; }
-        .hidden { display: none !important; }
-        /* 修复：应用段DPL/属性行Grid布局，解决小屏幕排版对齐问题 */
-        .app-dpl-grid {
-            grid-template-rows: auto auto;
-            align-items: center;
+        .seg-section {
+            display: block;
         }
+
+        .sys-param {
+            margin: 10px 0;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* DPL网格容器：单列布局，DPL和复选框组各占一行 */
+        .app-dpl-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            /* 单列 */
+            gap: 16px;
+            /* DPL行和复选框行的间距 */
+            margin-top: 16px;
+            align-items: center;
+            /* 行内垂直居中 */
+        }
+
+        /* 增大DPL输入框宽度 */
+        #dpl {
+            width: 100px !important;
+            /* 从100px增大到200px，可按需调为300px/100% */
+            padding: 10px;
+            /* 与全局输入框样式统一 */
+            flex-shrink: 0;
+            /* 防止输入框因空间不足被挤压 */
+        }
+
+        /* DPL区域：三个元素同行+垂直居中 */
+        .dpl-inline-group {
+            display: flex;
+            /* 启用Flex布局，实现同行 */
+            align-items: center;
+            /* 核心：垂直居中对齐 */
+            gap: 12px;
+            /* 元素之间的水平间距，可按需调整 */
+            flex-wrap: nowrap;
+            /* 强制不换行，保证始终同行 */
+        }
+
+        /* 微调辅助文本样式（消除默认间距，适配同行布局） */
+        .dpl-inline-group .helper-text {
+            margin-top: 0 !important;
+            /* 去掉原有顶部间距 */
+            font-size: 12px;
+            /* 保持小字样式（可按需调整） */
+            color: var(--text-secondary);
+            /* 沿用你的深色主题文字色 */
+        }
+
+        /* 标签样式微调（可选，保证视觉统一） */
+        .dpl-inline-group label {
+            margin-bottom: 0 !important;
+            /* 去掉标签默认底部间距 */
+            white-space: nowrap;
+            /* 标签文字不换行 */
+        }
+
+        /* 三个复选框的容器：Flex横向排列 */
+        .dpl-checkboxes-group {
+            display: flex;
+            gap: 24px;
+            /* 复选框之间的水平间距，可按需调整 */
+            align-items: center;
+            /* 复选框垂直居中 */
+            flex-wrap: wrap;
+            /* 小屏幕自动换行，适配性更好 */
+        }
+
+        /* 微调复选框项样式（可选，保证视觉统一） */
+        .dpl-checkboxes-group .checkbox-item {
+            margin: 0;
+            /* 清除多余边距 */
+            flex-shrink: 0;
+            /* 防止复选框项被挤压 */
+        }
+
         .app-dpl-grid .checkbox-item {
             align-self: center !important;
         }
-    </style>
-</head>
-<body>
 
-<div class="card">
-    <h2>x86 32位段描述符计算器</h2>
-    
-    <!-- 核心修改：总段类型改为选项卡（替换原select） -->
-    <div class="tab-container" id="totalSegTab">
-        <div class="tab-item active" data-type="app">应用程序 (代码/数据)</div>
-        <div class="tab-item" data-type="sys">系统 (IDT/门/TSS等)</div>
-    </div>
-
-    <!-- 原有：应用段参数区域（适配选项卡样式） -->
-    <div id="appSegArea" class="seg-section">
-        <div class="grid">
-            <div>
-                <label>基地址 (Base)</label>
-                <input type="text" id="base" value="0x00000000">
-                <div class="helper-text">32位线性地址</div>
-            </div>
-            <div>
-                <label>界限 (Limit)</label>
-                <input type="text" id="limit" value="0xFFFFF">
-                <div class="helper-text">段界限</div>
-            </div>
-        </div>
-
-        <!-- 应用段类型改为选项卡（替换原select） -->
-        <div class="tab-container" id="appTypeTab" style="margin-top: 16px;">
-            <div class="tab-item active" data-apptype="data">数据段</div>
-            <div class="tab-item" data-apptype="code">代码段</div>
-        </div>
-
-        <!-- 应用段属性复选框（适配图片布局） -->
-        <div class="checkbox-group">
-            <div class="checkbox-item" id="expandDownItem">
-                <input type="checkbox" id="e">
-                <label for="e" style="margin:0;">向下扩展 (Expand Down)</label>
-            </div>
-            <div class="checkbox-item">
-                <input type="checkbox" id="dataWritable">
-                <label for="dataWritable" style="margin:0;">可写 (Writable)</label>
-            </div>
-            <div class="checkbox-item">
-                <input type="checkbox" id="accessed">
-                <label for="accessed" style="margin:0;">已访问 (Accessed)</label>
-            </div>
-            <div class="checkbox-item">
-                <input type="checkbox" id="g" checked>
-                <label for="g" style="margin:0;">粒度 (Granularity, 1=4KB, 0=1B)</label>
-            </div>
-        </div>
-
-        <!-- 修复：添加app-dpl-grid类，解决小屏幕排版对齐问题 -->
-        <div class="grid app-dpl-grid" style="margin-top: 16px;">
-            <div>
-                <label>描述符特权级 (DPL)</label>
-                <input type="text" id="dpl" value="0" style="width: 100px;">
-                <div class="helper-text">0-3 (0为最高特权)</div>
-            </div>
-            <div class="checkbox-item">
-                <input type="checkbox" id="present" checked>
-                <label for="present" style="margin:0;">存在 (Present)</label>
-            </div>
-            <div class="checkbox-item">
-                <input type="checkbox" id="avl">
-                <label for="avl" style="margin:0;">可用位 (Available bit)</label>
-            </div>
-            <div class="checkbox-item">
-                <input type="checkbox" id="db" checked>
-                <label for="db" style="margin:0;">32位模式 (32-bit)</label>
-            </div>
-        </div>
-    </div>
-
-    <!-- 系统段参数区域 -->
-    <div id="sysSegArea" class="seg-section hidden">
-        <h4>系统段参数配置</h4>
-        <select id="sysType" onchange="updateSysSegParams(this.value)" style="margin-bottom:16px;">
-            <option value="0" selected>0 - 无效段</option>
-            <option value="1">1 - 286 可用TSS</option>
-            <option value="2">2 - 局部描述符表 LDT</option>
-            <option value="3">3 - 286 忙TSS</option>
-            <option value="4">4 - 286 调用门</option>
-            <option value="5">5 - 任务门</option>
-            <option value="6">6 - 286 中断门</option>
-            <option value="7">7 - 286 陷阱门</option>
-            <option value="8">8 - 无效段</option>
-            <option value="9">9 - 386 可用TSS</option>
-            <option value="10">10 - 无效段</option>
-            <option value="11">11 - 386 忙TSS</option>
-            <option value="12">12 - 386 调用门</option>
-            <option value="13">13 - 无效段</option>
-            <option value="14">14 - 386 中断门</option>
-            <option value="15">15 - 386 陷阱门</option>
-        </select>
-
-        <!-- TSS/LDT专属参数（修复：修改标签为通用命名，动态切换文案） -->
-        <div id="sysTssParams" class="sys-param grid hidden">
-            <div>
-                <label id="baseTssLabel">TSS基地址 (32位)</label>
-                <input type="text" id="baseTss" value="0x00000000">
-                <div class="helper-text">32位线性地址</div>
-            </div>
-            <div>
-                <label id="limitTssLabel">TSS界限 (大小，字节)</label>
-                <input type="text" id="limitTss" value="134">
-                <div class="helper-text">段结构大小-1</div>
-            </div>
-        </div>
-
-        <!-- 门/ LDT专属参数 -->
-        <div id="sysGateParams" class="sys-param grid">
-            <div>
-                <label>选择子 (Selector, 16位)</label>
-                <input type="text" id="sel" value="0x0000">
-                <div class="helper-text">16位段选择子</div>
-            </div>
-            <div>
-                <label>偏移 (Offset, 32位)</label>
-                <input type="text" id="offset" value="0x00000000">
-                <div class="helper-text">32位偏移地址</div>
-            </div>
-        </div>
-
-        <!-- 调用门专属参数 -->
-        <div id="sysCallGateParams" class="sys-param hidden">
-            <label>调用门参数个数 (0-31)</label>
-            <input type="text" id="cgParams" value="0" style="width:100px;">
-            <div class="helper-text">传递的参数数量</div>
-        </div>
-
-        <!-- 新增：系统段独立的 DPL 和 Present -->
-        <div class="grid" style="margin-top: 16px;">
-            <div>
-                <label>描述符特权级 (DPL)</label>
-                <input type="text" id="sysDpl" value="0" style="width: 100px;">
-                <div class="helper-text">0-3 (0为最高特权)</div>
-            </div>
-            <div class="checkbox-item" style="align-self: flex-end;">
-                <input type="checkbox" id="sysPresent" checked>
-                <label for="sysPresent" style="margin:0;">存在 (Present)</label>
-            </div>
-        </div>
-
-        <!-- 修复：修改G/AVL注释，删除「仅TSS生效」的错误描述 -->
-        <div class="checkbox-group" style="margin-top:16px;">
-            <div class="checkbox-item">
-                <input type="checkbox" id="sysG" checked>
-                <label for="sysG" style="margin:0;">粒度 G=1（4KB分页，TSS/LDT生效）</label>
-            </div>
-            <div class="checkbox-item">
-                <input type="checkbox" id="sysSz" checked>
-                <label for="sysSz" style="margin:0;">32位段 SZ=1（仅386段/门生效）</label>
-            </div>
-            <div class="checkbox-item">
-                <input type="checkbox" id="sysAvl">
-                <label for="sysAvl" style="margin:0;">可用位 AVL=1（自定义，TSS/LDT生效）</label>
-            </div>
-        </div>
-    </div>
-
-    <button onclick="calculate()">生成描述符并分析</button>
-</div>
-
-<div class="card">
-    <h3>计算分析步进 <span id="segTypeTip" style="font-size:0.8rem; color:var(--text-secondary); font-weight:normal;">(应用段 - 代码/数据)</span></h3>
-    <div id="analysis" class="analysis">等待计算...</div>
-    
-    <h3>汇编输出 (x86小端序，直接复制到汇编代码中)</h3>
-    <div class="code-container">
-        <div class="code-row"><span class="code-label">DQ</span><span id="out-dq"></span></div>
-        <div class="code-row"><span class="code-label">DD</span><span id="out-dd"></span></div>
-        <div class="code-row"><span class="code-label">DW</span><span id="out-dw"></span></div>
-        <div class="code-row"><span class="code-label">DB</span><span id="out-db"></span></div>
-    </div>
-</div>
-
-<script>
-    // 修复：定义核心常量，替换魔法数字，提升可读性（轻量优化）
-    const CONST = {
-        MASK_32BIT: 0xFFFFFFFF,
-        MASK_20BIT: 0xFFFFF,
-        MASK_16BIT: 0xFFFF,
-        MASK_8BIT: 0xFF,
-        MASK_4BIT: 0x0F,
-        MASK_3BIT: 0x07,
-        MASK_2BIT: 0x03,
-        MASK_5BIT: 0x1F,
-        APP_DATA_BASE: 0x10,
-        APP_CODE_BASE: 0x18,
-        BIT_G: 0x80,
-        BIT_DB: 0x40,
-        BIT_AVL: 0x10,
-        BIT_P: 0x80
-    };
-    // 修复：缓存常用DOM元素，避免重复查询（轻量优化）
-    const DOM = {
-        analysis: document.getElementById('analysis'),
-        segTypeTip: document.getElementById('segTypeTip'),
-        baseTssLabel: document.getElementById('baseTssLabel'),
-        limitTssLabel: document.getElementById('limitTssLabel'),
-        sysType: document.getElementById('sysType')
-    };
-    // 修复：用局部状态对象替代window全局变量，解决全局污染问题
-    const appState = {
-        currentTotalSegType: 'app',
-        currentAppType: 'data'
-    };
-    // 系统段类型常量
-    const TSS_TYPES = [1, 3, 9, 11];
-    const CALLGATE_TYPES = [4, 12];
-    const SYS_SEG_TYPES = [1, 2, 3, 9, 11];  // 包含 LDT
-
-    // 修复：增强parseNum函数，支持校验负数+焦点定位+范围校验，入参新增el（输入框DOM）和max（最大值）
-function parseNum(val, el = null, max = Infinity) {
-    val = val.trim().toLowerCase();
-    const num = val.startsWith('0x') ? parseInt(val, 16) : parseInt(val, 10);
-    // 校验非数字
-    if (isNaN(num) || !isFinite(num)) {
-        alert(`输入的「${val}」不是有效数字，请输入十六进制（0x开头）或十进制数！`);
-        el && el.focus(); // 定位到错误输入框
-        return 0;
-    }
-    // 校验负数（描述符参数均为无符号数）
-    if (num < 0) {
-        alert(`输入不能为负数，请输入非负的十六进制（0x开头）或十进制数！`);
-        el && el.focus();
-        return 0;
-    }
-    // 校验超范围
-    if (num > max && max !== Infinity) {
-        alert(`输入值超出范围，最大值为${max.toString(16).startsWith('0x') ? max : '0x' + max.toString(16).toUpperCase()}！`);
-        el && el.focus();
-        return 0;
-    }
-    return num;
+        /* 针对你的表格结构：.parent-table是table的类，detailBody是tbody的ID */
+/* 1. 给table设置固定布局（核心） */
+table.parent-table {
+  width: 100% !important; /* 强制占满宽度，提高优先级 */
+  border-collapse: collapse !important;
+  table-layout: fixed !important; /* 固定布局，列宽不随内容变 */
+  color: var(--text-primary) !important;
 }
 
-    // 更新应用段标签和可见性
-    function updateAppTypeLabels() {
-        const isCode = appState.currentAppType === 'code';
-        
-        // 可读/可写标签
-        const writableLabel = document.querySelector('label[for="dataWritable"]');
-        if (writableLabel) {
-            writableLabel.innerText = isCode ? '可读 (Readable)' : '可写 (Writable)';
+/* 2. 控制第一列（标识列：P/DPL/S等） */
+table.parent-table #detailBody tr td:nth-child(1) {
+  width: 75px !important; /* 按需调整，比如60px */
+  padding: 8px !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  text-align: left !important;
+  white-space: nowrap !important; /* 文字不换行 */
+  flex-shrink: 0 !important;
+}
+
+/* 3. 控制第二列（值列：1/0/0x8等） */
+table.parent-table #detailBody tr td:nth-child(2) {
+  width: 125px !important; /* 按需调整 */
+  padding: 8px !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  text-align: left !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important; /* 超长显示省略号 */
+  flex-shrink: 0 !important;
+}
+
+/* 4. 控制第三列（解析列：段存在/0级内核级等） */
+table.parent-table #detailBody tr td:nth-child(3) {
+  width: calc(100% - 200px) !important; /* 100% - 80 - 220 */
+  padding: 8px !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  text-align: left !important;
+  word-wrap: break-word !important; /* 解析文本超长时换行 */
+}
+
+        /* 解析功能表格样式补充，与整体风格统一 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            color: var(--text-primary);
+            margin-top: 10px;
         }
-        
-        // 扩展/一致性标签
-        const expandLabel = document.querySelector('label[for="e"]');
-        if (expandLabel) {
-            expandLabel.innerText = isCode ? '一致性 (Conforming)' : '向下扩展 (Expand Down)';
+
+        table th,
+        table td {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid var(--border-color);
         }
-        
-        // 代码段时隐藏向下扩展复选框
-        const expandItem = document.getElementById('expandDownItem');
-        if (expandItem) {
-            expandItem.style.display = isCode ? 'none' : 'flex';
+
+        table th {
+            color: #38bdf8;
+            font-weight: 500;
         }
-        // 修复：应用段切换代码/数据后自动计算，与系统段交互逻辑保持一致
-        calculate();
-    }
 
-    // 总段类型选项卡切换
-    document.getElementById('totalSegTab').addEventListener('click', function(e) {
-        if (e.target.classList.contains('tab-item')) {
-            this.querySelectorAll('.tab-item').forEach(item => item.classList.remove('active'));
-            e.target.classList.add('active');
-            appState.currentTotalSegType = e.target.dataset.type;
-            switchTotalSegType();
-        }
-    });
-    // 应用段类型选项卡切换
-    document.getElementById('appTypeTab').addEventListener('click', function(e) {
-        if (e.target.classList.contains('tab-item')) {
-            this.querySelectorAll('.tab-item').forEach(item => item.classList.remove('active'));
-            e.target.classList.add('active');
-            appState.currentAppType = e.target.dataset.apptype;
-            updateAppTypeLabels();
-        }
-    });
+    </style>
+</head>
 
-    /**
-     * 切换总段类型
-     */
-    function switchTotalSegType() {
-        const totalType = appState.currentTotalSegType || 'app';
-        const appArea = document.getElementById('appSegArea');
-        const sysArea = document.getElementById('sysSegArea');
-        
-        appArea.classList.toggle('hidden', totalType === 'sys');
-        sysArea.classList.toggle('hidden', totalType === 'app');
-        DOM.segTypeTip.innerText = totalType === 'app' ? '(应用段 - 代码/数据)' : '(系统段 - TSS/LDT/门描述符)';
-        calculate();
-    }
+<body>
 
-    /**
-     * 系统段参数更新 - 核心修复点：LDT场景和TSS一样隐藏选择子/偏移，显示基地址/界限
-     */
-    function updateSysSegParams(sysTypeVal) {
-        const sysType = parseInt(sysTypeVal);
-        const tssParams = document.getElementById('sysTssParams');
-        const gateParams = document.getElementById('sysGateParams');
-        const callGateParams = document.getElementById('sysCallGateParams');
-        
-        // 修复：将LDT（sysType=2）纳入TSS分支，隐藏gateParams（选择子/偏移），显示tssParams（基地址/界限）
-        const isTssOrLdt = TSS_TYPES.includes(sysType) || sysType === 2; 
-        tssParams.classList.toggle('hidden', !isTssOrLdt);
-        gateParams.classList.toggle('hidden', isTssOrLdt);
-        
-        const isCallGate = CALLGATE_TYPES.includes(sysType);
-        callGateParams.classList.toggle('hidden', !isCallGate);
-        
-        // 修复：LDT段动态修改输入框标签，解决文案错误问题
-        const isLdt = sysType === 2;
-        DOM.baseTssLabel.innerText = isLdt ? 'LDT基地址 (32位)' : 'TSS基地址 (32位)';
-        DOM.limitTssLabel.innerText = isLdt ? 'LDT界限 (大小，字节)' : 'TSS界限 (大小，字节)';
-        
-        calculate();
-    }
+    <!-- 原上下布局：两个div依次排列 -->
+    <!-- 修改后左右布局：外层Flex容器 + 左右两个功能容器 -->
+    <div class="calculator-container">
+        <!-- 左侧：段描述符计算功能 -->
+        <div class="calc-left">
+            <!-- 原有段描述符计算的表单、按钮、结果展示等内容 -->
+            <!-- 原有：段描述符生成器卡片 -->
+            <div class="card">
+                <h2>x86 32位段描述符计算器</h2>
 
-    // ====================== 辅助函数 ======================
-    function calculateAppSegment() {
-        // 修复：参数解析增加范围校验+焦点定位，避免静默截断
-        const baseEl = document.getElementById('base');
-        const limitEl = document.getElementById('limit');
-        const dplEl = document.getElementById('dpl');
-        const limit20 = parseNum(limitEl.value, limitEl, CONST.MASK_20BIT) & CONST.MASK_20BIT;
-        const base = parseNum(baseEl.value, baseEl, CONST.MASK_32BIT) & CONST.MASK_32BIT;
-        const dpl = parseNum(dplEl.value, dplEl, CONST.MASK_2BIT) & CONST.MASK_2BIT;
+                <!-- 核心修改：总段类型改为选项卡（替换原select） -->
+                <div class="tab-container" id="totalSegTab">
+                    <div class="tab-item active" data-type="app">代码/数据段</div>
+                    <div class="tab-item" data-type="sys">系统 (LDT/门/TSS等)</div>
+                </div>
 
-        const g = document.getElementById('g').checked;
-        const db = document.getElementById('db').checked;
-        const e = document.getElementById('e').checked;
-        const accessed = document.getElementById('accessed').checked ? 1 : 0;
-        const avl = document.getElementById('avl').checked;
-        const present = document.getElementById('present').checked ? 1 : 0;
+                <!-- 原有：应用段参数区域（适配选项卡样式） -->
+                <div id="appSegArea" class="seg-section">
+                    <div class="grid">
+                        <div>
+                            <label>基地址 (Base)</label>
+                            <input type="text" id="base" value="0x00000000">
+                            <div class="helper-text">32位线性地址</div>
+                        </div>
+                        <div>
+                            <label>界限 (Limit)</label>
+                            <input type="text" id="limit" value="0xFFFFF">
+                            <div class="helper-text">段界限</div>
+                        </div>
+                    </div>
 
-        const effLimit = (g ? ((limit20 << 12) | 0xFFF) : limit20) >>> 0;
-        const maxOffset = (db ? CONST.MASK_32BIT : 0xFFFF) >>> 0;
+                    <!-- 应用段类型改为选项卡（替换原select） -->
+                    <div class="tab-container" id="appTypeTab" style="margin-top: 16px;">
+                        <div class="tab-item active" data-apptype="data">数据段</div>
+                        <div class="tab-item" data-apptype="code">代码段</div>
+                    </div>
 
-        let rangeMin, rangeMax, totalSize;
-        if (e) {
-            rangeMin = BigInt(effLimit) + 1n;
-            rangeMax = BigInt(maxOffset);
-            if (rangeMin > rangeMax) {
-                rangeMin = 0n;
-                rangeMax = BigInt(maxOffset);
-                totalSize = rangeMax + 1n;
-            } else {
-                totalSize = rangeMax - rangeMin + 1n;
+                    <!-- 应用段属性复选框（适配图片布局） -->
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="g" checked>
+                            <label for="g" style="margin:0;">粒度 (Granularity, 1=4KB, 0=1B)</label>
+                        </div>
+                        <div class="checkbox-item" id="expandDownItem">
+                            <input type="checkbox" id="e">
+                            <label for="e" style="margin:0;">向下扩展 (Expand Down)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="dataWritable">
+                            <label for="dataWritable" style="margin:0;">可写 (Writable)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="accessed">
+                            <label for="accessed" style="margin:0;">已访问 (Accessed)</label>
+                        </div>
+                    </div>
+
+                    <!-- 修复：添加app-dpl-grid类，解决小屏幕排版对齐问题 -->
+                    <div class="grid app-dpl-grid" style="margin-top: 16px;">
+                        <!-- 给三个元素的父容器新增类名 dpl-inline-group -->
+                        <div class="dpl-checkboxes-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="present" checked>
+                                <label for="present" style="margin:0;">存在 (Present)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="avl">
+                                <label for="avl" style="margin:0;">可用位 (Available bit)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="db" checked>
+                                <label for="db" style="margin:0;">32位模式 (32-bit)</label>
+                            </div>
+                        </div>
+
+                        <div class="dpl-inline-group">
+                            <label>描述符特权级 (DPL)</label>
+                            <input type="text" id="dpl" value="0">
+                            <div class="helper-text"> (0-3，0为最高特权)</div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 系统段参数区域 -->
+                <div id="sysSegArea" class="seg-section hidden">
+                    <h4>系统段参数配置</h4>
+                    <select id="sysType" onchange="updateSysSegParams(this.value)" style="margin-bottom:16px;">
+                        <option value="0" selected>0 - 无效段</option>
+                        <option value="1">1 - 286 可用TSS</option>
+                        <option value="2">2 - 局部描述符表 LDT</option>
+                        <option value="3">3 - 286 忙TSS</option>
+                        <option value="4">4 - 286 调用门</option>
+                        <option value="5">5 - 任务门</option>
+                        <option value="6">6 - 286 中断门</option>
+                        <option value="7">7 - 286 陷阱门</option>
+                        <option value="8">8 - 无效段</option>
+                        <option value="9">9 - 386 可用TSS</option>
+                        <option value="10">10 - 无效段</option>
+                        <option value="11">11 - 386 忙TSS</option>
+                        <option value="12">12 - 386 调用门</option>
+                        <option value="13">13 - 无效段</option>
+                        <option value="14">14 - 386 中断门</option>
+                        <option value="15">15 - 386 陷阱门</option>
+                    </select>
+
+                    <!-- TSS/LDT专属参数（修复：修改标签为通用命名，动态切换文案） -->
+                    <div id="sysTssParams" class="sys-param grid hidden">
+                        <div>
+                            <label id="baseTssLabel">TSS基地址 (32位)</label>
+                            <input type="text" id="baseTss" value="0x00000000">
+                            <div class="helper-text">32位线性地址</div>
+                        </div>
+                        <div>
+                            <label id="limitTssLabel">TSS界限 (大小，字节)</label>
+                            <input type="text" id="limitTss" value="134">
+                            <div class="helper-text">段结构大小-1</div>
+                        </div>
+                    </div>
+
+                    <!-- 门/ LDT专属参数 -->
+                    <div id="sysGateParams" class="sys-param grid">
+                        <div>
+                            <label>选择子 (Selector, 16位)</label>
+                            <input type="text" id="sel" value="0x0000">
+                            <div class="helper-text">16位段选择子</div>
+                        </div>
+                        <div>
+                            <label>偏移 (Offset, 32位)</label>
+                            <input type="text" id="offset" value="0x00000000">
+                            <div class="helper-text">32位偏移地址</div>
+                        </div>
+                    </div>
+
+                    <!-- 调用门专属参数 -->
+                    <div id="sysCallGateParams" class="sys-param hidden">
+                        <label>调用门参数个数 (0-31)</label>
+                        <input type="text" id="cgParams" value="0" style="width:100px;">
+                        <div class="helper-text">传递的参数数量</div>
+                    </div>
+
+                    <!-- 新增：系统段独立的 DPL 和 Present -->
+                    <div class="grid" style="margin-top: 16px;">
+                        <div>
+                            <label>描述符特权级 (DPL)</label>
+                            <input type="text" id="sysDpl" value="0" style="width: 100px;">
+                            <div class="helper-text">0-3 (0为最高特权)</div>
+                        </div>
+                        <div class="checkbox-item" style="align-self: flex-end;">
+                            <input type="checkbox" id="sysPresent" checked>
+                            <label for="sysPresent" style="margin:0;">存在 (Present)</label>
+                        </div>
+                    </div>
+
+                    <!-- 修复：修改G/AVL注释，删除「仅TSS生效」的错误描述 -->
+                    <div class="checkbox-group" style="margin-top:16px;">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="sysG" checked>
+                            <label for="sysG" style="margin:0;">粒度 G=1（4KB分页，TSS/LDT生效）</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="sysSz" checked>
+                            <label for="sysSz" style="margin:0;">32位段 SZ=1（仅386段/门生效）</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="sysAvl">
+                            <label for="sysAvl" style="margin:0;">可用位 AVL=1（自定义，TSS/LDT生效）</label>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="calculate()">生成描述符并分析</button>
+            </div>
+
+            <!-- 原有：生成结果展示卡片 -->
+            <div class="card">
+                <h3>计算分析步进 <span id="segTypeTip"
+                        style="font-size:0.8rem; color:var(--text-secondary); font-weight:normal;">(应用段 - 代码/数据)</span>
+                </h3>
+                <div id="analysis" class="analysis">等待计算...</div>
+
+                <h3>汇编输出 (x86小端序，直接复制到汇编代码中)</h3>
+                <div class="code-container">
+                    <div class="code-row"><span class="code-label">DQ</span><span id="out-dq"></span></div>
+                    <div class="code-row"><span class="code-label">DD</span><span id="out-dd"></span></div>
+                    <div class="code-row"><span class="code-label">DW</span><span id="out-dw"></span></div>
+                    <div class="code-row"><span class="code-label">DB</span><span id="out-db"></span></div>
+                </div>
+            </div>
+            <!-- 你的计算功能DOM元素 -->
+        </div>
+
+        <!-- 右侧：段描述符解析含义功能 -->
+        <div class="calc-right">
+            <!-- 原有段描述符解析的表单、按钮、含义展示等内容 -->
+            <!-- 新增：段描述符解析器卡片（放在最顶部，与生成功能分离且优先级直观） -->
+            <div class="card">
+                <h2>段描述符 → 解析含义</h2>
+                <div class="grid">
+                    <div style="grid-column: 1 / -1;">
+                        <label>8字节段描述符（32位）</label>
+                        <input type="text" id="descInput" placeholder="支持格式：连续16位/字节分隔/双字分隔，忽略大小写/空格/0x"
+                            value="00409800000001FF">
+                        <div class="helper-text">支持应用段（S=1）解析，自动兼容大/小端输入，示例：00409800000001FF / 00,40,98,00,00,00,01,FF
+                        </div>
+                    </div>
+                </div>
+                <button onclick="parseDesc()">解析描述符含义</button>
+
+                <!-- 解析核心结果展示区 -->
+                <div id="parseResult" class="analysis" style="margin-top: 20px;">等待解析...</div>
+
+                <!-- 解析详细字段展示区 -->
+                <!-- 解析详细字段展示区（修复：补充table标签包裹tbody） -->
+                <div id="detailTable" class="code-container" style="margin-top: 20px; display: none;">
+                    <h4>描述符详细字段解析</h4>
+                    <table class="parent-table"> <!-- 新增table标签 -->
+                        <tbody id="detailBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- 你的解析功能DOM元素 -->
+        </div>
+    </div>
+
+
+
+
+
+    <script>
+        // 修复：定义核心常量，替换魔法数字，提升可读性（轻量优化）
+        const CONST = {
+            MASK_32BIT: 0xFFFFFFFF,
+            MASK_20BIT: 0xFFFFF,
+            MASK_16BIT: 0xFFFF,
+            MASK_8BIT: 0xFF,
+            MASK_4BIT: 0x0F,
+            MASK_3BIT: 0x07,
+            MASK_2BIT: 0x03,
+            MASK_5BIT: 0x1F,
+            APP_DATA_BASE: 0x10,
+            APP_CODE_BASE: 0x18,
+            BIT_G: 0x80,
+            BIT_DB: 0x40,
+            BIT_AVL: 0x10,
+            BIT_P: 0x80
+        };
+
+        // ====================== 新增：解析功能专属常量与映射表 ======================
+        // 段类型值→语义描述映射（Intel 32位保护模式标准）
+        const TYPE_MAP = {
+            '8': '代码段 - 可执行（非一致，不可读，未访问）',
+            '9': '代码段 - 可执行（非一致，不可读，已访问）',
+            'A': '代码段 - 可执行（非一致，可读，未访问）',
+            'B': '代码段 - 可执行（非一致，可读，已访问）',
+            'C': '代码段 - 可执行（一致，不可读，未访问）',
+            'D': '代码段 - 可执行（一致，不可读，已访问）',
+            'E': '代码段 - 可执行（一致，可读，未访问）',
+            'F': '代码段 - 可执行（一致，可读，已访问）',
+            '0': '数据段 - 不可执行（向上扩展，不可写，未访问）',
+            '1': '数据段 - 不可执行（向上扩展，不可写，已访问）',
+            '2': '数据段 - 不可执行（向上扩展，可写，未访问）',
+            '3': '数据段 - 不可执行（向上扩展，可写，已访问）',
+            '4': '数据段 - 不可执行（向下扩展，不可写，未访问）',
+            '5': '数据段 - 不可执行（向下扩展，不可写，已访问）',
+            '6': '数据段 - 不可执行（向下扩展，可写，未访问）',
+            '7': '数据段 - 不可执行（向下扩展，可写，已访问）'
+        };
+        // DPL特权级→语义描述映射
+        const DPL_MAP = {
+            '0': '0级（内核级，最高权限，仅0级可访问）',
+            '1': '1级（特权级1，仅1级及以上可访问）',
+            '2': '2级（特权级2，仅2级及以上可访问）',
+            '3': '3级（用户级，最低权限，所有特权级可访问）'
+        };
+
+        // ====================== 新增：解析功能核心辅助函数 ======================
+        /**
+         * 格式化输入为标准16位十六进制（过滤非十六进制字符，补零/截断）
+         * @param {string} input - 原始输入
+         * @param {number} length - 目标长度
+         * @returns {string} 标准十六进制字符串
+         */
+        function formatHex(input, length) {
+            let hex = input.replace(/[^0-9a-fA-F]/g, '').toUpperCase();
+            // 新增：提示输入长度不足
+            if (hex.length < length) {
+                console.warn(`输入仅${hex.length}位，自动补零至${length}位`);
             }
-        } else {
-            rangeMin = 0n;
-            rangeMax = BigInt(effLimit);
-            totalSize = rangeMax + 1n;
+            while (hex.length < length) hex = '0' + hex;
+            if (hex.length > length) hex = hex.slice(-length);
+            return hex;
+        }
+        /**
+         * 将16位标准十六进制描述符拆分为8个字节（小端序）
+         * @param {string} hex16 - 16位标准十六进制
+         * @returns {array} 8个字节的十六进制数组
+         */
+        function splitDescToBytes(hex16) {
+            const bytes = [];
+            for (let i = 0; i < 8; i++) {
+                const start = 14 - 2 * i;
+                const end = start + 2;
+                bytes.push(hex16.slice(start, end));
+            }
+            return bytes;
+        }
+        /**
+         * 十六进制转十进制
+         * @param {string} hex - 十六进制字符串
+         * @returns {number} 十进制数值
+         */
+        function hex2Dec(hex) {
+            return parseInt(hex, 16);
+        }
+        /**
+         * 十进制转十六进制
+         * @param {number} dec - 十进制数值
+         * @returns {string} 十六进制字符串
+         */
+        function dec2Hex(dec) {
+            return dec.toString(16).toUpperCase();
+        }
+        /**
+         * 十进制转指定位数的二进制
+         * @param {number} dec - 十进制数值
+         * @param {number} bits - 目标位数
+         * @returns {string} 指定位数的二进制字符串
+         */
+        function dec2Bin(dec, bits) {
+            return dec.toString(2).padStart(bits, '0');
+        }
+        /**
+         * 计算实际段限长（根据粒度G位扩展）
+         * @param {string} limit20Hex - 19位原始限长十六进制
+         * @param {number} G - 粒度位（0/1）
+         * @returns {object} 实际限长+描述
+         */
+        function calcActualLimit(limit20Hex, G) {
+            const limit20 = hex2Dec(limit20Hex);
+            if (G === 1) {
+                const actual = (limit20 << 12) | 0xFFF;
+                const sizeMB = (actual + 1) / 1024 / 1024;
+                return {
+                    actual: `0x${dec2Hex(actual).padStart(8, '0')}`,
+                    desc: `原始0x${limit20Hex} → 4KB粒度扩展为0x${dec2Hex(actual).padStart(8, '0')}，段总长度${sizeMB.toFixed(2)} MB`
+                };
+            } else {
+                const sizeByte = limit20 + 1;
+                const sizeStr = sizeByte >= 1024 ? `${(sizeByte / 1024).toFixed(2)} KB` : `${sizeByte} 字节`;
+                return {
+                    actual: `0x${limit20Hex.padStart(8, '0')}`,
+                    desc: `原始0x${limit20Hex} → 字节粒度，段总长度${sizeStr}`
+                };
+            }
         }
 
-        const sizeNum = Number(totalSize);
-        let sizeStr = '';
-        if (sizeNum >= 1024 * 1024) sizeStr = `${(sizeNum / 1024 / 1024).toFixed(2)} MB`;
-        else if (sizeNum >= 1024) sizeStr = `${(sizeNum / 1024).toFixed(2)} KB`;
-        else sizeStr = `${sizeNum} 字节`;
-        if (sizeNum >= 4 * 1024 * 1024 * 1024) sizeStr += '（x86 32位最大地址空间）';
+        // ====================== 新增：解析功能核心方法（与生成互逆） ======================
+        /**
+         * 核心解析：任意格式描述符 → 语义化信息
+         * @param {string} input - 原始输入（大端/小端/分隔/双字）
+         * @returns {object} 核心信息+详细字段+风险提示
+         */
+        function parseDescriptor(input) {
+            // 1. 标准化为16位大端十六进制，转小端字节数组
+            const descHex16 = formatHex(input, 16);
+            const [byte0, byte1, byte2, byte3, byte4, byte5, byte6, byte7] = splitDescToBytes(descHex16);
 
-        const analysisHtml = `
-            <b>1. 基础属性</b> → G=${g?1:0} | D/B=${db?1:0} | ${appState.currentAppType==='code' ? 'C' : 'E'}=${e?1:0} | A=${accessed?1:0} | AVL=${avl?1:0} | DPL=${dpl} | P=${present}<br>
-            <b>2. 粒度G=${g?1:0}</b> → 有效界限: <code>0x${effLimit.toString(16).toUpperCase().padStart(8, '0')}</code><br>
-            <b>3. 32位D/B=${db?1:0}</b> → 地址模式上限: <code>0x${maxOffset.toString(16).toUpperCase().padStart(8, '0')}</code><br>
+            // 2. 解析控制位（Intel标准，小端字节5/6）
+            const b5Dec = hex2Dec(byte5), b6Dec = hex2Dec(byte6);
+            const P = (b5Dec >> 7) & 0x01, DPL = (b5Dec >> 5) & 0x03;
+            const S = (b5Dec >> 4) & 0x01, TYPE = b5Dec & 0x0F;
+            const G = (b6Dec >> 7) & 0x01, D_B = (b6Dec >> 6) & 0x01;
+            const L = (b6Dec >> 5) & 0x01, AVL = (b6Dec >> 4) & 0x01;
+            const L19_16 = dec2Hex(b6Dec & 0x0F);
+
+            // 3. 解析基地址（32位，小端字节拼接）
+            const base32 = (byte7 + byte4 + byte3 + byte2).padStart(8, '0');
+            const baseDesc = `0x${base32}`;
+
+            // 4. 解析限长（20位，小端字节拼接）
+            const limit20 = (L19_16 + byte1 + byte0).slice(0, 5).padStart(5, '0');
+            const limitObj = calcActualLimit(limit20, G);
+
+            // 5. 语义化转换（兼容应用段S=1，系统段做提示）
+            const TYPEHex = dec2Hex(TYPE).toUpperCase();
+            const segType = S === 1 ? (TYPE_MAP[TYPEHex] || '未知应用段类型') : `系统段/门（类型0x${TYPEHex}，暂不解析）`;
+            const DPLDesc = DPL_MAP[DPL.toString()] || '未知特权级';
+            const PDesc = P === 1 ? '段存在，可正常访问' : '段不存在，访问触发#NP（段不存在）异常';
+            const coreDplP = `DPL=${DPL}（${DPLDesc.split('（')[0]}），P=${P}（${PDesc}）`;
+            const SDesc = S === 1 ? '应用段（代码/数据段，可解析）' : '系统段/门描述符（暂不支持解析）';
+
+            // 6. 详细字段
+            const detail = {
+                P: { val: P, desc: PDesc },
+                DPL: { val: DPL, desc: DPLDesc },
+                S: { val: S, desc: SDesc },
+                TYPE: { val: `0x${TYPEHex} (${dec2Bin(TYPE, 4)})`, desc: segType },
+                G: { val: G, desc: G === 1 ? '4KB粒度，限长按4KB扩展' : '字节粒度，限长不扩展' },
+                D_B: { val: D_B, desc: D_B === 1 ? '32位段（D/B位=1，32位保护模式标准）' : '16位段（D/B位=0，兼容实模式）' },
+                L: { val: L, desc: L === 1 ? '64位长模式段（32位模式下无效）' : '32位/16位段（标准模式）' },
+                AVL: { val: AVL, desc: AVL === 1 ? '用户自定义使用（硬件不处理）' : '硬件忽略，未使用' },
+                基地址: { val: baseDesc, desc: `32位线性基地址，段起始地址=${baseDesc}` },
+                原始限长: { val: `0x${limit20}`, desc: limitObj.desc },
+                实际限长: { val: limitObj.actual, desc: `段最大可访问偏移地址=${limitObj.actual}` }
+            };
+
+            // 7. 风险提示
+            let warn = '';
+            if (P === 0) warn = '⚠️  存在位P=0，访问该段会触发#NP（段不存在）异常，禁止使用！';
+            else if (DPL === 0 && TYPEHex.match(/[C-EF]/)) warn = '⚠️  内核级（DPL=0）一致代码段，低特权级可直接访问，存在权限泄露风险！';
+            else if (D_B === 0) warn = '⚠️  D/B位=0，为16位段，非32位保护模式标准段，注意地址范围限制！';
+            else if (S === 0) warn = '⚠️  检测到系统段/门描述符，当前仅支持应用段（S=1）解析！';
+
+            return {
+                segType: segType, baseAddr: baseDesc, limit: limitObj.actual, dplP: coreDplP, S: S,
+                detail: detail, warn: warn
+            };
+        }
+
+        // ====================== 原有：缓存常用DOM元素，避免重复查询 ======================
+        const DOM = {
+            analysis: document.getElementById('analysis'),
+            segTypeTip: document.getElementById('segTypeTip'),
+            baseTssLabel: document.getElementById('baseTssLabel'),
+            limitTssLabel: document.getElementById('limitTssLabel'),
+            sysType: document.getElementById('sysType')
+        };
+        // 修复：用局部状态对象替代window全局变量，解决全局污染问题
+        const appState = {
+            currentTotalSegType: 'app',
+            currentAppType: 'data'
+        };
+        // 系统段类型常量
+        const TSS_TYPES = [1, 3, 9, 11];
+        const CALLGATE_TYPES = [4, 12];
+        const SYS_SEG_TYPES = [1, 2, 3, 9, 11];  // 包含 LDT
+
+        // 修复：增强parseNum函数，支持校验负数+焦点定位+范围校验，入参新增el（输入框DOM）和max（最大值）
+        function parseNum(val, el = null, max = Infinity) {
+            val = val.trim().toLowerCase();
+            const num = val.startsWith('0x') ? parseInt(val, 16) : parseInt(val, 10);
+            // 校验非数字
+            if (isNaN(num) || !isFinite(num)) {
+                alert(`输入的「${val}」不是有效数字，请输入十六进制（0x开头）或十进制数！`);
+                el && el.focus(); // 定位到错误输入框
+                return 0;
+            }
+            // 校验负数（描述符参数均为无符号数）
+            if (num < 0) {
+                alert(`输入不能为负数，请输入非负的十六进制（0x开头）或十进制数！`);
+                el && el.focus();
+                return 0;
+            }
+            // 校验超范围
+            if (num > max && max !== Infinity) {
+                alert(`输入值超出范围，最大值为${max.toString(16).startsWith('0x') ? max : '0x' + max.toString(16).toUpperCase()}！`);
+                el && el.focus();
+                return 0;
+            }
+            return num;
+        }
+
+        // 更新应用段标签和可见性
+        function updateAppTypeLabels() {
+            const isCode = appState.currentAppType === 'code';
+
+            // 可读/可写标签
+            const writableLabel = document.querySelector('label[for="dataWritable"]');
+            if (writableLabel) {
+                writableLabel.innerText = isCode ? '可读 (Readable)' : '可写 (Writable)';
+            }
+
+            // 扩展/一致性标签
+            const expandLabel = document.querySelector('label[for="e"]');
+            if (expandLabel) {
+                expandLabel.innerText = isCode ? '一致性 (Conforming)' : '向下扩展 (Expand Down)';
+            }
+
+            // 代码段时隐藏向下扩展复选框
+            // const expandItem = document.getElementById('expandDownItem');
+            // if (expandItem) {
+            //     expandItem.style.display = isCode ? 'none' : 'flex';
+            // }
+            // 修复：应用段切换代码/数据后自动计算，与系统段交互逻辑保持一致
+            calculate();
+        }
+
+        // 总段类型选项卡切换
+        document.getElementById('totalSegTab').addEventListener('click', function (e) {
+            if (e.target.classList.contains('tab-item')) {
+                this.querySelectorAll('.tab-item').forEach(item => item.classList.remove('active'));
+                e.target.classList.add('active');
+                appState.currentTotalSegType = e.target.dataset.type;
+                switchTotalSegType();
+            }
+        });
+        // 应用段类型选项卡切换
+        document.getElementById('appTypeTab').addEventListener('click', function (e) {
+            if (e.target.classList.contains('tab-item')) {
+                this.querySelectorAll('.tab-item').forEach(item => item.classList.remove('active'));
+                e.target.classList.add('active');
+                appState.currentAppType = e.target.dataset.apptype;
+                updateAppTypeLabels();
+            }
+        });
+
+        /**
+         * 切换总段类型
+         */
+        function switchTotalSegType() {
+            const totalType = appState.currentTotalSegType || 'app';
+            const appArea = document.getElementById('appSegArea');
+            const sysArea = document.getElementById('sysSegArea');
+
+            appArea.classList.toggle('hidden', totalType === 'sys');
+            sysArea.classList.toggle('hidden', totalType === 'app');
+            DOM.segTypeTip.innerText = totalType === 'app' ? '(应用段 - 代码/数据)' : '(系统段 - TSS/LDT/门描述符)';
+            calculate();
+        }
+
+        /**
+         * 系统段参数更新 - 核心修复点：LDT场景和TSS一样隐藏选择子/偏移，显示基地址/界限
+         */
+        function updateSysSegParams(sysTypeVal) {
+            const sysType = parseInt(sysTypeVal);
+            const tssParams = document.getElementById('sysTssParams');
+            const gateParams = document.getElementById('sysGateParams');
+            const callGateParams = document.getElementById('sysCallGateParams');
+
+            // 修复：将LDT（sysType=2）纳入TSS分支，隐藏gateParams（选择子/偏移），显示tssParams（基地址/界限）
+            const isTssOrLdt = TSS_TYPES.includes(sysType) || sysType === 2;
+            tssParams.classList.toggle('hidden', !isTssOrLdt);
+            gateParams.classList.toggle('hidden', isTssOrLdt);
+
+            const isCallGate = CALLGATE_TYPES.includes(sysType);
+            callGateParams.classList.toggle('hidden', !isCallGate);
+
+            // 修复：LDT段动态修改输入框标签，解决文案错误问题
+            const isLdt = sysType === 2;
+            DOM.baseTssLabel.innerText = isLdt ? 'LDT基地址 (32位)' : 'TSS基地址 (32位)';
+            DOM.limitTssLabel.innerText = isLdt ? 'LDT界限 (大小，字节)' : 'TSS界限 (大小，字节)';
+
+            calculate();
+        }
+
+        // ====================== 原有：生成功能核心函数 ======================
+        function calculateAppSegment() {
+            // 修复：参数解析增加范围校验+焦点定位，避免静默截断
+            const baseEl = document.getElementById('base');
+            const limitEl = document.getElementById('limit');
+            const dplEl = document.getElementById('dpl');
+            const limit20 = parseNum(limitEl.value, limitEl, CONST.MASK_20BIT) & CONST.MASK_20BIT;
+            const base = parseNum(baseEl.value, baseEl, CONST.MASK_32BIT) & CONST.MASK_32BIT;
+            const dpl = parseNum(dplEl.value, dplEl, CONST.MASK_2BIT) & CONST.MASK_2BIT;
+
+            const g = document.getElementById('g').checked;
+            const db = document.getElementById('db').checked;
+            const e = document.getElementById('e').checked;
+            const accessed = document.getElementById('accessed').checked ? 1 : 0;
+            const avl = document.getElementById('avl').checked;
+            const present = document.getElementById('present').checked ? 1 : 0;
+
+            const effLimit = (g ? ((limit20 << 12) | 0xFFF) : limit20) >>> 0;
+            const maxOffset = (db ? CONST.MASK_32BIT : 0xFFFF) >>> 0;
+
+            let rangeMin, rangeMax, totalSize;
+            if (e) {
+                rangeMin = BigInt(effLimit) + 1n;
+                rangeMax = BigInt(maxOffset);
+                if (rangeMin > rangeMax) {
+                    rangeMin = 0n;
+                    rangeMax = BigInt(maxOffset);
+                    totalSize = rangeMax + 1n;
+                } else {
+                    totalSize = rangeMax - rangeMin + 1n;
+                }
+            } else {
+                rangeMin = 0n;
+                rangeMax = BigInt(effLimit);
+                totalSize = rangeMax + 1n;
+            }
+
+            const sizeNum = Number(totalSize);
+            let sizeStr = '';
+            if (sizeNum >= 1024 * 1024) sizeStr = `${(sizeNum / 1024 / 1024).toFixed(2)} MB`;
+            else if (sizeNum >= 1024) sizeStr = `${(sizeNum / 1024).toFixed(2)} KB`;
+            else sizeStr = `${sizeNum} 字节`;
+            if (sizeNum >= 4 * 1024 * 1024 * 1024) sizeStr += '（x86 32位最大地址空间）';
+
+            const analysisHtml = `
+            <b>1. 基础属性</b> → G=${g ? 1 : 0} | D/B=${db ? 1 : 0} | ${appState.currentAppType === 'code' ? 'C' : 'E'}=${e ? 1 : 0} | A=${accessed ? 1 : 0} | AVL=${avl ? 1 : 0} | DPL=${dpl} | P=${present}<br>
+            <b>2. 粒度G=${g ? 1 : 0}</b> → 有效界限: <code>0x${effLimit.toString(16).toUpperCase().padStart(8, '0')}</code><br>
+            <b>3. 32位D/B=${db ? 1 : 0}</b> → 地址模式上限: <code>0x${maxOffset.toString(16).toUpperCase().padStart(8, '0')}</code><br>
             <b>4. 段有效地址范围:</b> <code>0x${rangeMin.toString(16).toUpperCase()}</code> 至 <code>0x${rangeMax.toString(16).toUpperCase()}</code><br>
             <b>5. 段总长度:</b> <b style="color:var(--success)">${totalSize.toLocaleString()} 字节 (${sizeStr})</b>
         `;
 
-        const isCode = appState.currentAppType === 'code';
-        let typeFinal;
-        const accessedBit = accessed;
-        if (isCode) {
-            const conforming = e ? 0x04 : 0;
-            const readable = document.getElementById('dataWritable').checked ? 0x02 : 0;
-            typeFinal = CONST.APP_CODE_BASE | conforming | readable | accessedBit;
-        } else {
-            const expandDown = e ? 0x04 : 0;
-            const writable = document.getElementById('dataWritable').checked ? 0x02 : 0;
-            typeFinal = CONST.APP_DATA_BASE | expandDown | writable | accessedBit;
+            const isCode = appState.currentAppType === 'code';
+            let typeFinal;
+            const accessedBit = accessed;
+            if (isCode) {
+                const conforming = e ? 0x04 : 0;
+                const readable = document.getElementById('dataWritable').checked ? 0x02 : 0;
+                typeFinal = CONST.APP_CODE_BASE | conforming | readable | accessedBit;
+            } else {
+                const expandDown = e ? 0x04 : 0;
+                const writable = document.getElementById('dataWritable').checked ? 0x02 : 0;
+                typeFinal = CONST.APP_DATA_BASE | expandDown | writable | accessedBit;
+            }
+
+            const b = new Uint8Array(8);
+            b[0] = limit20 & CONST.MASK_8BIT;
+            b[1] = (limit20 >> 8) & CONST.MASK_8BIT;
+            b[2] = base & CONST.MASK_8BIT;
+            b[3] = (base >> 8) & CONST.MASK_8BIT;
+            b[4] = (base >> 16) & CONST.MASK_8BIT;
+            b[5] = (present << 7) | (dpl << 5) | 0x10 | typeFinal;
+            b[6] = (g ? CONST.BIT_G : 0) | (db ? CONST.BIT_DB : 0) | (avl ? CONST.BIT_AVL : 0) | ((limit20 >> 16) & CONST.MASK_4BIT);
+            b[7] = (base >> 24) & CONST.MASK_8BIT;
+
+            return { b, analysisHtml };
         }
 
-        const b = new Uint8Array(8);
-        b[0] = limit20 & CONST.MASK_8BIT;
-        b[1] = (limit20 >> 8) & CONST.MASK_8BIT;
-        b[2] = base & CONST.MASK_8BIT;
-        b[3] = (base >> 8) & CONST.MASK_8BIT;
-        b[4] = (base >> 16) & CONST.MASK_8BIT;
-        b[5] = (present << 7) | (dpl << 5) | 0x10 | typeFinal;
-        b[6] = (g ? CONST.BIT_G : 0) | (db ? CONST.BIT_DB : 0) | (avl ? CONST.BIT_AVL : 0) | ((limit20 >> 16) & CONST.MASK_4BIT);
-        b[7] = (base >> 24) & CONST.MASK_8BIT;
+        function calculateSysSegment() {
+            const sysTypeVal = DOM.sysType.value;
+            const sysType = parseInt(sysTypeVal) & CONST.MASK_4BIT;
+            const isSysSeg = SYS_SEG_TYPES.includes(sysType);
+            const isCallGate = CALLGATE_TYPES.includes(sysType);
+            // 修复：系统段参数增加范围校验+焦点定位
+            const sysDplEl = document.getElementById('sysDpl');
+            const baseTssEl = document.getElementById('baseTss');
+            const limitTssEl = document.getElementById('limitTss');
+            const selEl = document.getElementById('sel');
+            const offsetEl = document.getElementById('offset');
+            const cgParamsEl = document.getElementById('cgParams');
+            const dpl = parseNum(sysDplEl.value, sysDplEl, CONST.MASK_2BIT) & CONST.MASK_2BIT;
+            const present = document.getElementById('sysPresent').checked ? 1 : 0;
+            const sysG = document.getElementById('sysG').checked;
+            const sysSz = document.getElementById('sysSz').checked;
+            const sysAvl = document.getElementById('sysAvl').checked;
 
-        return { b, analysisHtml };
-    }
+            let tssBase = 0, tssLimit = 0, sel = 0, offset = 0, cgParamNum = 0;
+            let effTssLimit = 0;
+            let warningStr = '';
 
-    function calculateSysSegment() {
-        const sysTypeVal = DOM.sysType.value;
-        const sysType = parseInt(sysTypeVal) & CONST.MASK_4BIT;
-        const isSysSeg = SYS_SEG_TYPES.includes(sysType);
-        const isCallGate = CALLGATE_TYPES.includes(sysType);
-        // 修复：系统段参数增加范围校验+焦点定位
-        const sysDplEl = document.getElementById('sysDpl');
-        const baseTssEl = document.getElementById('baseTss');
-        const limitTssEl = document.getElementById('limitTss');
-        const selEl = document.getElementById('sel');
-        const offsetEl = document.getElementById('offset');
-        const cgParamsEl = document.getElementById('cgParams');
-        const dpl = parseNum(sysDplEl.value, sysDplEl, CONST.MASK_2BIT) & CONST.MASK_2BIT;
-        const present = document.getElementById('sysPresent').checked ? 1 : 0;
-        const sysG = document.getElementById('sysG').checked;
-        const sysSz = document.getElementById('sysSz').checked;
-        const sysAvl = document.getElementById('sysAvl').checked;
-
-        let tssBase = 0, tssLimit = 0, sel = 0, offset = 0, cgParamNum = 0;
-        let effTssLimit = 0;
-        let warningStr = '';
-
-        if (isSysSeg) {
-            tssBase = parseNum(baseTssEl.value, baseTssEl, CONST.MASK_32BIT) & CONST.MASK_32BIT;
-            tssLimit = parseNum(limitTssEl.value, limitTssEl, CONST.MASK_32BIT) >>> 0;
-            // 修复：无论原始大小，G=1 时始终按 4KB 粒度处理（符合规范）
-            if (sysG) {
-                effTssLimit = (tssLimit >>> 12) & CONST.MASK_20BIT;
-                if ((tssLimit & 0xFFF) !== 0xFFF) {
-                    warningStr = '⚠️ 警告：TSS/LDT界限已按4KB粒度处理';
+            if (isSysSeg) {
+                tssBase = parseNum(baseTssEl.value, baseTssEl, CONST.MASK_32BIT) & CONST.MASK_32BIT;
+                tssLimit = parseNum(limitTssEl.value, limitTssEl, CONST.MASK_32BIT) >>> 0;
+                // 修复：无论原始大小，G=1 时始终按 4KB 粒度处理（符合规范）
+                if (sysG) {
+                    effTssLimit = (tssLimit >>> 12) & CONST.MASK_20BIT;
+                    if ((tssLimit & 0xFFF) !== 0xFFF) {
+                        warningStr = '⚠️ 警告：TSS/LDT界限已按4KB粒度处理';
+                    }
+                } else {
+                    effTssLimit = tssLimit & CONST.MASK_20BIT;
                 }
             } else {
-                effTssLimit = tssLimit & CONST.MASK_20BIT;
+                sel = parseNum(selEl.value, selEl, CONST.MASK_16BIT) & CONST.MASK_16BIT;
+                offset = parseNum(offsetEl.value, offsetEl, CONST.MASK_32BIT) & CONST.MASK_32BIT;
+                if (isCallGate) cgParamNum = parseNum(cgParamsEl.value, cgParamsEl, CONST.MASK_5BIT) & CONST.MASK_5BIT;
+                if (sysType === 5) { offset = 0; cgParamNum = 0; }
             }
-        } else {
-            sel = parseNum(selEl.value, selEl, CONST.MASK_16BIT) & CONST.MASK_16BIT;
-            offset = parseNum(offsetEl.value, offsetEl, CONST.MASK_32BIT) & CONST.MASK_32BIT;
-            if (isCallGate) cgParamNum = parseNum(cgParamsEl.value, cgParamsEl, CONST.MASK_5BIT) & CONST.MASK_5BIT;
-            if (sysType === 5) { offset = 0; cgParamNum = 0; }
-        }
 
-        const isLdt = sysType === 2;
-        const segName = isLdt ? 'LDT' : 'TSS';
-        let analysisHtml = `
-            <b>1. 系统段基础属性</b> → 类型=${sysType} | DPL=${dpl} | P=${present} | G=${sysG?1:0} | SZ=${sysSz?1:0} | AVL=${sysAvl?1:0}<br>
+            const isLdt = sysType === 2;
+            const segName = isLdt ? 'LDT' : 'TSS';
+            let analysisHtml = `
+            <b>1. 系统段基础属性</b> → 类型=${sysType} | DPL=${dpl} | P=${present} | G=${sysG ? 1 : 0} | SZ=${sysSz ? 1 : 0} | AVL=${sysAvl ? 1 : 0}<br>
             <b>2. 系统段类型描述:</b> <code>${DOM.sysType.options[DOM.sysType.selectedIndex].text}</code><br>
         `;
-        if (sysType === 5) {
-            analysisHtml += `<b>⚠️ 任务门说明:</b> 偏移字段无效，已强制置0<br>`;
-        }
+            if (sysType === 5) {
+                analysisHtml += `<b>⚠️ 任务门说明:</b> 偏移字段无效，已强制置0<br>`;
+            }
 
-        if (isSysSeg) {
-            const hardwareLimit = sysG ? ((effTssLimit << 12) | 0xFFF) : effTssLimit;
-            analysisHtml += `
+            if (isSysSeg) {
+                const hardwareLimit = sysG ? ((effTssLimit << 12) | 0xFFF) : effTssLimit;
+                analysisHtml += `
                 <b>3. ${segName}参数</b> → 基地址: <code>0x${tssBase.toString(16).toUpperCase().padStart(8, '0')}</code> | 原始界限: ${tssLimit} | 存储界限值: <code>0x${effTssLimit.toString(16).toUpperCase().padStart(8, '0')}</code>${sysG ? ` | 硬件有效界限: <code>0x${hardwareLimit.toString(16).toUpperCase().padStart(8, '0')}</code>` : ''}<br>
                 <b>4. ${segName}有效大小:</b> <b style="color:var(--success)">${sysG ? ((effTssLimit + 1) * 4096) : (effTssLimit + 1)} 字节</b>
             `;
-        } else {
-            analysisHtml += `
+            } else {
+                analysisHtml += `
                 <b>3. 门参数</b> → 选择子: <code>0x${sel.toString(16).toUpperCase().padStart(4, '0')}</code> | 偏移: <code>0x${offset.toString(16).toUpperCase().padStart(8, '0')}</code><br>
                 ${isCallGate ? `<b>4. 调用门参数个数:</b> <code>${cgParamNum}</code><br>` : ''}
             `;
-        }
-
-        const b = new Uint8Array(8);
-        if (isSysSeg) {
-            const is386Seg = sysType >= 9;
-            const effectiveSz = is386Seg ? sysSz : false;
-            b[0] = effTssLimit & CONST.MASK_8BIT;
-            b[1] = (effTssLimit >> 8) & CONST.MASK_8BIT;
-            b[2] = tssBase & CONST.MASK_8BIT;
-            b[3] = (tssBase >> 8) & CONST.MASK_8BIT;
-            b[4] = (tssBase >> 16) & CONST.MASK_8BIT;
-            b[5] = (present << 7) | (dpl << 5) | sysType;
-            b[6] = (sysG ? CONST.BIT_G : 0) | (effectiveSz ? CONST.BIT_DB : 0) | (sysAvl ? CONST.BIT_AVL : 0) | ((effTssLimit >> 16) & CONST.MASK_4BIT);
-            b[7] = (tssBase >> 24) & CONST.MASK_8BIT;
-        } else {
-            b[0] = offset & CONST.MASK_8BIT;
-            b[1] = (offset >> 8) & CONST.MASK_8BIT;
-            b[2] = sel & CONST.MASK_8BIT;
-            b[3] = (sel >> 8) & CONST.MASK_8BIT;
-            b[4] = isCallGate ? cgParamNum : 0;
-            b[5] = (present << 7) | (dpl << 5) | sysType;
-            b[6] = sysSz ? CONST.BIT_DB : 0;
-            b[6] |= ((offset >> 16) & CONST.MASK_8BIT);
-            b[7] = (offset >> 24) & CONST.MASK_8BIT;
-        }
-
-        return { b, analysisHtml, warning: warningStr };
-    }
-
-    function renderAnalysis(analysisHtml, warningStr = '') {
-        DOM.analysis.className = 'analysis';
-        DOM.analysis.innerHTML = analysisHtml;
-        if (warningStr) {
-            const warnDom = document.createElement('span');
-            warnDom.className = 'warning';
-            warnDom.innerText = warningStr;
-            DOM.analysis.appendChild(warnDom);
-        }
-    }
-    function renderError(errMsg) {
-        DOM.analysis.className = 'analysis error';
-        DOM.analysis.innerHTML = `<b>计算错误:</b> ${errMsg}<br>请检查输入参数是否合法，或刷新页面重试。`;
-    }
-
-    function renderOutputs(b) {
-        const toH = (n, p) => '0x' + n.toString(16).toUpperCase().padStart(p, '0');
-        const dv = new DataView(b.buffer);
-
-        document.getElementById('out-db').innerText = Array.from(b, x => x.toString(16).toUpperCase().padStart(2, '0')).join(', ');
-        document.getElementById('out-dw').innerText = [0,2,4,6].map(i => toH(dv.getUint16(i, true), 4)).join(', ');
-        document.getElementById('out-dd').innerText = [0,4].map(i => toH(dv.getUint32(i, true), 8)).join(', ');
-        document.getElementById('out-dq').innerText = toH(dv.getBigUint64(0, true), 16);
-    }
-
-    function calculate() {
-        try {
-            DOM.analysis.innerHTML = '';
-            const totalSegType = appState.currentTotalSegType || 'app';
-            let result;
-
-            if (totalSegType === 'app') {
-                result = calculateAppSegment();
-            } else {
-                result = calculateSysSegment();
             }
 
-            renderAnalysis(result.analysisHtml, result.warning || '');
-            renderOutputs(result.b);
-        } catch (err) {
-            console.error('计算异常:', err);
-            renderError(err.message || '未知错误');
-        }
-    }
+            const b = new Uint8Array(8);
+            if (isSysSeg) {
+                const is386Seg = sysType >= 9;
+                const effectiveSz = is386Seg ? sysSz : false;
+                b[0] = effTssLimit & CONST.MASK_8BIT;
+                b[1] = (effTssLimit >> 8) & CONST.MASK_8BIT;
+                b[2] = tssBase & CONST.MASK_8BIT;
+                b[3] = (tssBase >> 8) & CONST.MASK_8BIT;
+                b[4] = (tssBase >> 16) & CONST.MASK_8BIT;
+                b[5] = (present << 7) | (dpl << 5) | sysType;
+                b[6] = (sysG ? CONST.BIT_G : 0) | (effectiveSz ? CONST.BIT_DB : 0) | (sysAvl ? CONST.BIT_AVL : 0) | ((effTssLimit >> 16) & CONST.MASK_4BIT);
+                b[7] = (tssBase >> 24) & CONST.MASK_8BIT;
+            } else {
+                b[0] = offset & CONST.MASK_8BIT;
+                b[1] = (offset >> 8) & CONST.MASK_8BIT;
+                b[2] = sel & CONST.MASK_8BIT;
+                b[3] = (sel >> 8) & CONST.MASK_8BIT;
+                b[4] = isCallGate ? cgParamNum : 0;
+                b[5] = (present << 7) | (dpl << 5) | sysType;
+                b[6] = sysSz ? CONST.BIT_DB : 0;
+                b[6] |= ((offset >> 16) & CONST.MASK_8BIT);
+                b[7] = (offset >> 24) & CONST.MASK_8BIT;
+            }
 
-    updateAppTypeLabels();
-    calculate();
-</script>
+            return { b, analysisHtml, warning: warningStr };
+        }
+
+        function renderAnalysis(analysisHtml, warningStr = '') {
+            DOM.analysis.className = 'analysis';
+            DOM.analysis.innerHTML = analysisHtml;
+            if (warningStr) {
+                const warnDom = document.createElement('span');
+                warnDom.className = 'warning';
+                warnDom.innerText = warningStr;
+                DOM.analysis.appendChild(warnDom);
+            }
+        }
+        function renderError(errMsg) {
+            DOM.analysis.className = 'analysis error';
+            DOM.analysis.innerHTML = `<b>计算错误:</b> ${errMsg}<br>请检查输入参数是否合法，或刷新页面重试。`;
+        }
+
+        function renderOutputs(b) {
+            const toH = (n, p) => '0x' + n.toString(16).toUpperCase().padStart(p, '0');
+            const dv = new DataView(b.buffer);
+
+            document.getElementById('out-db').innerText = Array.from(b, x => x.toString(16).toUpperCase().padStart(2, '0')).join(', ');
+            document.getElementById('out-dw').innerText = [0, 2, 4, 6].map(i => toH(dv.getUint16(i, true), 4)).join(', ');
+            document.getElementById('out-dd').innerText = [0, 4].map(i => toH(dv.getUint32(i, true), 8)).join(', ');
+            document.getElementById('out-dq').innerText = toH(dv.getBigUint64(0, true), 16);
+        }
+
+        function calculate() {
+            try {
+                DOM.analysis.innerHTML = '';
+                const totalSegType = appState.currentTotalSegType || 'app';
+                let result;
+
+                if (totalSegType === 'app') {
+                    result = calculateAppSegment();
+                } else {
+                    result = calculateSysSegment();
+                }
+
+                renderAnalysis(result.analysisHtml, result.warning || '');
+                renderOutputs(result.b);
+            } catch (err) {
+                console.error('计算异常:', err);
+                renderError(err.message || '未知错误');
+            }
+        }
+
+        // ====================== 新增：解析功能页面交互函数 ======================
+        /**
+         * 解析按钮点击事件：处理输入、调用核心解析、渲染结果
+         */
+        function parseDesc() {
+            try {
+                const input = document.getElementById('descInput').value;
+                if (!input) {
+                    alert('请输入8字节段描述符后再解析！');
+                    document.getElementById('descInput').focus();
+                    return;
+                }
+                const result = parseDescriptor(input);
+
+                // 渲染核心解析结果
+                const resultHtml = `
+                <b>段类型语义：</b> <code>${result.segType}</code><br>
+                <b>段基地址：</b> <code>${result.baseAddr}</code><br>
+                <b>段实际限长：</b> <code>${result.limit}</code><br>
+                <b>特权级/存在状态：</b> ${result.dplP}<br>
+                ${result.warn ? `<span class="warning">${result.warn}</span>` : ''}
+            `;
+                const parseResultDom = document.getElementById('parseResult');
+                parseResultDom.className = result.S === 0 ? 'analysis error' : 'analysis';
+                parseResultDom.innerHTML = resultHtml;
+
+                // 渲染详细字段表格
+                const detailBody = document.getElementById('detailBody');
+                detailBody.innerHTML = '';
+                for (const [key, value] of Object.entries(result.detail)) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                    <td><b>${key}</b></td>
+                    <td><code>${value.val}</code></td>
+                    <td>${value.desc}</td>
+                `;
+                    detailBody.appendChild(row);
+                }
+                document.getElementById('detailTable').style.display = 'block';
+            } catch (err) {
+                console.error('解析异常:', err);
+                const parseResultDom = document.getElementById('parseResult');
+                parseResultDom.className = 'analysis error';
+                parseResultDom.innerHTML = `<b>解析错误:</b> ${err.message || '输入格式不正确，请检查描述符格式（需8字节16位十六进制）'}`;
+                document.getElementById('detailTable').style.display = 'none';
+            }
+        }
+
+        // 页面初始化
+        updateAppTypeLabels();
+        calculate();
+    </script>
 </body>
-</html>
+
+</html> 
